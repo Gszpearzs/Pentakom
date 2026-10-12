@@ -953,126 +953,38 @@ function debounce(fn, wait) {
 }
 
 // -----------------------------------------------------------------------------
-// GENERATE DOKUMEN WORD (.DOCX) - FORMAT 100% PERSIS DOKUMEN RESMI BAKTI
+// GENERATE DOKUMEN PDF (.PDF) - FORMAT 100% PERSIS DOKUMEN RESMI BAKTI
 // -----------------------------------------------------------------------------
-async function buildBaktiDocx() {
-  if (typeof docx === "undefined") {
-    throw new Error("Pustaka docx belum siap dimuat.");
-  }
-  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, ImageRun } = docx;
+function escapeHtml(str) {
+  if (!str) return "-";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
-  const siteOwner = document.getElementById("siteOwner").value;
-  const siteId = document.getElementById("siteId").value || "-";
-  const siteName = document.getElementById("siteName").value || "-";
-  const siteAddress = document.getElementById("siteAddress").value || "-";
-  const province = document.getElementById("province").value || "-";
-  const kabupaten = document.getElementById("kabupaten").value || "-";
-  const desa = document.getElementById("desa").value || "-";
-  const latitude = document.getElementById("latitude").value || "-";
-  const longitude = document.getElementById("longitude").value || "-";
-  const picName = document.getElementById("picName").value || "-";
-  const picPhone = document.getElementById("picPhone").value || "-";
-  const techName = document.getElementById("techName").value || "-";
-  const workDate = document.getElementById("workDate").value || "-";
-  const timeArrival = document.getElementById("timeArrival").value || "-";
-  const timeDeparture = document.getElementById("timeDeparture").value || "-";
-  const kegiatanType = document.getElementById("kegiatanType").value;
-  const issueNotes = document.getElementById("issueNotes").value || "Kondisi normal / Sesuai laporan.";
+function buildBaktiPdfContainer() {
+  const siteOwner = document.getElementById("siteOwner")?.value || "-";
+  const siteId = document.getElementById("siteId")?.value || "-";
+  const siteName = document.getElementById("siteName")?.value || "-";
+  const siteAddress = document.getElementById("siteAddress")?.value || "-";
+  const province = document.getElementById("province")?.value || "-";
+  const kabupaten = document.getElementById("kabupaten")?.value || "-";
+  const desa = document.getElementById("desa")?.value || "-";
+  const latitude = document.getElementById("latitude")?.value || "-";
+  const longitude = document.getElementById("longitude")?.value || "-";
+  const picName = document.getElementById("picName")?.value || "-";
+  const picPhone = document.getElementById("picPhone")?.value || "-";
+  const techName = document.getElementById("techName")?.value || "-";
+  const workDate = document.getElementById("workDate")?.value || "-";
+  const timeArrival = document.getElementById("timeArrival")?.value || "-";
+  const timeDeparture = document.getElementById("timeDeparture")?.value || "-";
+  const kegiatanType = document.getElementById("kegiatanType")?.value || "-";
+  const issueNotes = document.getElementById("issueNotes")?.value || "Kondisi normal / Sesuai laporan.";
 
-  function cellText(txt, bold = false, align = AlignmentType.LEFT) {
-    return new TableCell({
-      children: [new Paragraph({ alignment: align, children: [new TextRun({ text: txt, bold, size: 18 })] })]
-    });
-  }
-
-  const docSections = [];
-
-  // HALAMAN 1: HEADER & TABEL INFORMASI UMUM
-  docSections.push(
-    new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "LAPORAN PEMELIHARAAN", bold: true, size: 28 })] }),
-    new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: "BAKTI", bold: true, size: 26, color: "E53935" })] }),
-    new Paragraph({ text: "" }),
-    new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      rows: [
-        new TableRow({ children: [cellText("Pemilik Site", true), cellText(siteOwner)] }),
-        new TableRow({ children: [cellText("Site ID (Kode Lokasi)", true), cellText(siteId)] }),
-        new TableRow({ children: [cellText("Nama Site (Nama Site/Lokasi)", true), cellText(siteName)] }),
-        new TableRow({ children: [cellText("Alamat Site/Lokasi", true), cellText(siteAddress)] }),
-        new TableRow({ children: [cellText("Provinsi", true), cellText(province)] }),
-        new TableRow({ children: [cellText("Kabupaten", true), cellText(kabupaten)] }),
-        new TableRow({ children: [cellText("Kelurahan/Desa", true), cellText(desa)] }),
-        new TableRow({ children: [cellText("Latitude / Longitude", true), cellText(`Lat: ${latitude} | Lon: ${longitude}`)] }),
-        new TableRow({ children: [cellText("Nama PIC Lokasi", true), cellText(picName)] }),
-        new TableRow({ children: [cellText("No HP PIC Lokasi", true), cellText(picPhone)] }),
-        new TableRow({ children: [cellText("Petugas (Nama Teknisi)", true), cellText(techName)] }),
-        new TableRow({ children: [cellText("Tanggal Kedatangan", true), cellText(workDate)] }),
-        new TableRow({ children: [cellText("Waktu Kedatangan & Selesai", true), cellText(`${timeArrival} s/d ${timeDeparture}`)] }),
-        new TableRow({ children: [cellText("Kegiatan CM/PM", true), cellText(kegiatanType)] }),
-        new TableRow({ children: [cellText("Jenis Layanan", true), cellText("On-Site")] })
-      ]
-    }),
-    new Paragraph({ text: "" }),
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "I. PENJELASAN RINGKAS KONDISI / GANGGUAN PADA SAAT KEDATANGAN", bold: true, size: 20 })] }),
-    new Paragraph({ children: [new TextRun({ text: issueNotes, size: 18 })] }),
-    new Paragraph({ text: "" }),
-
-    // BAGIAN II: STATUS OUTDOOR
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "II. STATUS OUTDOOR (SEBELUM & SESUDAH MAINTENANCE)", bold: true, size: 20 })] })
-  );
-
-  // Tabel Outdoor
-  const outRows = [
-    new TableRow({
-      children: [
-        cellText("ITEM FISIK OUTDOOR", true),
-        cellText("SEBELUM", true, AlignmentType.CENTER),
-        cellText("SESUDAH", true, AlignmentType.CENTER)
-      ]
-    })
-  ];
-  OUTDOOR_ITEMS.forEach((name, i) => {
-    const st = outdoorState[i] || { before: "Berfungsi", after: "Berfungsi" };
-    outRows.push(
-      new TableRow({
-        children: [
-          cellText(name),
-          cellText(st.before, false, AlignmentType.CENTER),
-          cellText(st.after, false, AlignmentType.CENTER)
-        ]
-      })
-    );
-  });
-  docSections.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: outRows }), new Paragraph({ text: "" }));
-
-  // BAGIAN III: STATUS INDOOR
-  docSections.push(
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "III. STATUS INDOOR (SEBELUM & SESUDAH MAINTENANCE)", bold: true, size: 20 })] })
-  );
-  const inRows = [
-    new TableRow({
-      children: [
-        cellText("ITEM FISIK INDOOR", true),
-        cellText("SEBELUM", true, AlignmentType.CENTER),
-        cellText("SESUDAH", true, AlignmentType.CENTER)
-      ]
-    })
-  ];
-  INDOOR_ITEMS.forEach((name, i) => {
-    const st = indoorState[i] || { before: "Berfungsi", after: "Berfungsi" };
-    inRows.push(
-      new TableRow({
-        children: [
-          cellText(name),
-          cellText(st.before, false, AlignmentType.CENTER),
-          cellText(st.after, false, AlignmentType.CENTER)
-        ]
-      })
-    );
-  });
-  docSections.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: inRows }), new Paragraph({ text: "" }));
-
-  // BAGIAN IV: STATUS POWER & V. ALTERNATIF JARINGAN
+  // Parameter Power
   const upsB = document.getElementById("upsBefore") ? document.getElementById("upsBefore").value : "Tidak Ada";
   const upsA = document.getElementById("upsAfter") ? document.getElementById("upsAfter").value : "Tidak Ada";
   const stabB = document.getElementById("stabBefore") ? document.getElementById("stabBefore").value : "Ada";
@@ -1086,252 +998,553 @@ async function buildBaktiDocx() {
   const vStab = document.getElementById("voltStab") ? document.getElementById("voltStab").value : "220 Volt";
   const vGnd = document.getElementById("voltGround") ? document.getElementById("voltGround").value : "0.8 Volt";
 
-  docSections.push(
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "IV. STATUS POWER", bold: true, size: 20 })] }),
-    new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      rows: [
-        new TableRow({
-          children: [
-            cellText("PARAMETER POWER", true),
-            cellText("SEBELUM", true, AlignmentType.CENTER),
-            cellText("SESUDAH", true, AlignmentType.CENTER)
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Fisik UPS", true),
-            cellText(upsB, false, AlignmentType.CENTER),
-            cellText(upsA, false, AlignmentType.CENTER)
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Fisik Stabilizer", true),
-            cellText(stabB, false, AlignmentType.CENTER),
-            cellText(stabA, false, AlignmentType.CENTER)
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Source Power", true),
-            cellText(pwrSrcB, false, AlignmentType.CENTER),
-            cellText(pwrSrcA, false, AlignmentType.CENTER)
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Waktu Operasional", true),
-            cellText(`Hari: ${opDays} | Jam: ${opHours}`, false, AlignmentType.CENTER),
-            cellText(`Hari: ${opDays} | Jam: ${opHours}`, false, AlignmentType.CENTER)
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Teg. Input Source Power", true),
-            cellText(vIn, false, AlignmentType.CENTER),
-            cellText(vIn, false, AlignmentType.CENTER)
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Teg. Output UPS", true),
-            cellText(vUps, false, AlignmentType.CENTER),
-            cellText(vUps, false, AlignmentType.CENTER)
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Teg. Output Stabilizer", true),
-            cellText(vStab, false, AlignmentType.CENTER),
-            cellText(vStab, false, AlignmentType.CENTER)
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Teg. Grounding Power Source", true),
-            cellText(vGnd, false, AlignmentType.CENTER),
-            cellText(vGnd, false, AlignmentType.CENTER)
-          ]
-        })
-      ]
-    }),
-    new Paragraph({ text: "" }),
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "V. ALTERNATIF JARINGAN YANG ADA DI LOKASI", bold: true, size: 20 })] }),
-    new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      rows: [
-        new TableRow({
-          children: [
-            cellText("JARINGAN ALTERNATIF", true),
-            cellText("STATUS", true, AlignmentType.CENTER),
-            cellText("NAMA OPERATOR", true)
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Selular (4G)", true),
-            cellText(document.getElementById("selular4g").value || "Tidak Ada", false, AlignmentType.CENTER),
-            cellText(document.getElementById("operator4g").value || "-")
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Selular (3G / 2G)", true),
-            cellText(document.getElementById("selular3g").value || "Tidak Ada", false, AlignmentType.CENTER),
-            cellText(document.getElementById("operator3g").value || "-")
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Radio Link (RL)", true),
-            cellText(document.getElementById("altRl").value || "Tidak Ada", false, AlignmentType.CENTER),
-            cellText("-")
-          ]
-        }),
-        new TableRow({
-          children: [
-            cellText("Fiber Optic (Sekitar / Terpasang)", true),
-            cellText(document.getElementById("altFo").value || "Tidak Ada", false, AlignmentType.CENTER),
-            cellText("-")
-          ]
-        })
-      ]
-    }),
-    new Paragraph({ text: "" })
-  );
+  // Alternatif Jaringan
+  const sel4g = document.getElementById("selular4g")?.value || "Tidak Ada";
+  const op4g = document.getElementById("operator4g")?.value || "-";
+  const sel3g = document.getElementById("selular3g")?.value || "Tidak Ada";
+  const op3g = document.getElementById("operator3g")?.value || "-";
+  const altRl = document.getElementById("altRl")?.value || "Tidak Ada";
+  const altFo = document.getElementById("altFo")?.value || "Tidak Ada";
 
-  // BAGIAN VI: PERANGKAT TERPASANG (SN)
-  docSections.push(
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "VI. PERANGKAT TERPASANG (SN / MAC / ALIAS)", bold: true, size: 20 })] })
-  );
-  const snRows = [
-    new TableRow({
-      children: [
-        cellText("NO", true, AlignmentType.CENTER),
-        cellText("PERANGKAT", true),
-        cellText("SN SEBELUM", true),
-        cellText("SN SESUDAH", true)
-      ]
-    })
-  ];
-  SN_ITEMS.forEach((name, i) => {
-    const snB = document.getElementById(`sn_b_${i}`).value || "-";
-    const snA = document.getElementById(`sn_a_${i}`).value || "-";
-    snRows.push(
-      new TableRow({
-        children: [
-          cellText(String(i + 1), false, AlignmentType.CENTER),
-          cellText(name, true),
-          cellText(snB),
-          cellText(snA)
-        ]
-      })
-    );
+  // Tabel Outdoor
+  let outRowsHtml = "";
+  OUTDOOR_ITEMS.forEach((name, i) => {
+    const st = outdoorState[i] || { before: "Berfungsi", after: "Berfungsi" };
+    outRowsHtml += `<tr>
+      <td>${escapeHtml(name)}</td>
+      <td style="text-align: center;">${escapeHtml(st.before)}</td>
+      <td style="text-align: center;">${escapeHtml(st.after)}</td>
+    </tr>`;
   });
-  docSections.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: snRows }), new Paragraph({ text: "" }));
 
-  // BAGIAN VII: FOTO DOKUMENTASI LENGKAP
-  docSections.push(
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "VII. DOKUMENTASI FOTO SEBELUM & SESUDAH CM/PM", bold: true, size: 20 })] })
-  );
+  // Tabel Indoor
+  let inRowsHtml = "";
+  INDOOR_ITEMS.forEach((name, i) => {
+    const st = indoorState[i] || { before: "Berfungsi", after: "Berfungsi" };
+    inRowsHtml += `<tr>
+      <td>${escapeHtml(name)}</td>
+      <td style="text-align: center;">${escapeHtml(st.before)}</td>
+      <td style="text-align: center;">${escapeHtml(st.after)}</td>
+    </tr>`;
+  });
 
-  for (const pair of PHOTO_PAIRS) {
+  // Tabel SN Perangkat
+  let snRowsHtml = "";
+  SN_ITEMS.forEach((name, i) => {
+    const snB = (document.getElementById(`sn_b_${i}`)?.value || "-").trim();
+    const snA = (document.getElementById(`sn_a_${i}`)?.value || "-").trim();
+    snRowsHtml += `<tr>
+      <td style="text-align: center;">${i + 1}</td>
+      <td><strong>${escapeHtml(name)}</strong></td>
+      <td>${escapeHtml(snB || "-")}</td>
+      <td>${escapeHtml(snA || "-")}</td>
+    </tr>`;
+  });
+
+  // Foto Dokumentasi
+  let photoPairsHtml = "";
+  let hasPhotos = false;
+  PHOTO_PAIRS.forEach((pair) => {
     const leftB64 = photos[pair.left.id];
     const rightB64 = photos[pair.right.id];
-
     if (leftB64 || rightB64) {
-      docSections.push(
-        new Paragraph({ children: [new TextRun({ text: `> ${pair.title}`, bold: true, size: 19 })] })
-      );
+      hasPhotos = true;
+      const leftContent = leftB64
+        ? `<img class="pdf-photo-img" src="${leftB64}" alt="${escapeHtml(pair.left.label)}"><div class="pdf-photo-lbl">${escapeHtml(pair.left.label)}</div>`
+        : `<div class="pdf-photo-empty">[${escapeHtml(pair.left.label)}: Tidak Terlampir]</div>`;
+      const rightContent = rightB64
+        ? `<img class="pdf-photo-img" src="${rightB64}" alt="${escapeHtml(pair.right.label)}"><div class="pdf-photo-lbl">${escapeHtml(pair.right.label)}</div>`
+        : `<div class="pdf-photo-empty">[${escapeHtml(pair.right.label)}: Tidak Terlampir]</div>`;
 
-      const photoCells = [];
-
-      // Left Image
-      if (leftB64) {
-        const cleanL = leftB64.replace(/^data:image\/\w+;base64,/, "");
-        const bL = Uint8Array.from(atob(cleanL), c => c.charCodeAt(0));
-        photoCells.push(new TableCell({
-          children: [
-            new Paragraph({ children: [new TextRun({ text: pair.left.label, bold: true, size: 16 })] }),
-            new Paragraph({ children: [new ImageRun({ data: bL, transformation: { width: 280, height: 210 } })] })
-          ],
-          width: { size: 50, type: WidthType.PERCENTAGE }
-        }));
-      } else {
-        photoCells.push(new TableCell({ children: [new Paragraph(`[${pair.left.label}: Tidak Terlampir]`)], width: { size: 50, type: WidthType.PERCENTAGE } }));
-      }
-
-      // Right Image
-      if (rightB64) {
-        const cleanR = rightB64.replace(/^data:image\/\w+;base64,/, "");
-        const bR = Uint8Array.from(atob(cleanR), c => c.charCodeAt(0));
-        photoCells.push(new TableCell({
-          children: [
-            new Paragraph({ children: [new TextRun({ text: pair.right.label, bold: true, size: 16 })] }),
-            new Paragraph({ children: [new ImageRun({ data: bR, transformation: { width: 280, height: 210 } })] })
-          ],
-          width: { size: 50, type: WidthType.PERCENTAGE }
-        }));
-      } else {
-        photoCells.push(new TableCell({ children: [new Paragraph(`[${pair.right.label}: Tidak Terlampir]`)], width: { size: 50, type: WidthType.PERCENTAGE } }));
-      }
-
-      docSections.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [new TableRow({ children: photoCells })] }), new Paragraph({ text: "" }));
+      photoPairsHtml += `
+        <div class="pdf-photo-card">
+          <div class="pdf-photo-title">📍 ${escapeHtml(pair.title)}</div>
+          <div class="pdf-photo-grid">
+            <div class="pdf-photo-col">${leftContent}</div>
+            <div class="pdf-photo-col">${rightContent}</div>
+          </div>
+        </div>
+      `;
     }
+  });
+
+  if (!hasPhotos) {
+    photoPairsHtml = `<div style="padding: 10px; color: #64748b; font-style: italic;">Tidak ada foto dokumentasi yang dilampirkan.</div>`;
   }
 
-  // Lembar Pengesahan
-  docSections.push(
-    new Paragraph({ text: "" }),
-    new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      rows: [
-        new TableRow({
-          children: [
-            new TableCell({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Petugas / Teknisi Pelaksana,", bold: true })] })], width: { size: 50, type: WidthType.PERCENTAGE } }),
-            new TableCell({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Penanggung Jawab / PIC Lokasi,", bold: true })] })], width: { size: 50, type: WidthType.PERCENTAGE } })
-          ]
-        }),
-        new TableRow({
-          children: [
-            new TableCell({ children: [new Paragraph("\n\n\n\n"), new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `( ${techName} )`, underline: {} })] })] }),
-            new TableCell({ children: [new Paragraph("\n\n\n\n"), new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `( ${picName} )`, underline: {} })] })] })
-          ]
-        })
-      ]
-    })
-  );
+  const container = document.createElement("div");
+  container.id = "baktiPdfContainer";
+  container.style.position = "fixed";
+  container.style.left = "-9999px";
+  container.style.top = "0";
+  container.style.width = "780px";
+  container.style.background = "#ffffff";
+  container.style.zIndex = "-999";
 
-  const doc = new Document({ sections: [{ children: docSections }] });
-  return await Packer.toBlob(doc);
+  container.innerHTML = `
+    <div class="pdf-report-root">
+      <style>
+        .pdf-report-root {
+          width: 100%;
+          box-sizing: border-box;
+          background: #ffffff;
+          color: #1e293b;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          font-size: 10.5px;
+          line-height: 1.4;
+          padding: 15px 20px;
+        }
+        .pdf-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 2px solid #0f2942;
+          padding-bottom: 8px;
+          margin-bottom: 12px;
+        }
+        .pdf-header-title {
+          font-size: 14.5px;
+          font-weight: 800;
+          color: #0f2942;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .pdf-header-sub {
+          font-size: 9.5px;
+          color: #64748b;
+          font-weight: 600;
+          margin-top: 2px;
+        }
+        .pdf-bakti-tag {
+          background: #e53935;
+          color: #ffffff;
+          font-weight: 800;
+          font-size: 13px;
+          padding: 4px 12px;
+          border-radius: 4px;
+          letter-spacing: 1px;
+        }
+        .pdf-section-title {
+          background: #0f2942;
+          color: #ffffff;
+          font-size: 10.5px;
+          font-weight: 700;
+          padding: 5px 8px;
+          border-radius: 3px;
+          margin-top: 14px;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          page-break-after: avoid;
+          break-after: avoid;
+        }
+        .pdf-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 10px;
+          font-size: 9.5px;
+        }
+        .pdf-table th {
+          background: #f1f5f9;
+          color: #0f2942;
+          font-weight: 700;
+          border: 1px solid #cbd5e1;
+          padding: 4.5px 7px;
+          text-align: left;
+        }
+        .pdf-table td {
+          border: 1px solid #cbd5e1;
+          padding: 4px 7px;
+          vertical-align: middle;
+        }
+        .pdf-table-admin td:first-child {
+          background: #f8fafc;
+          font-weight: 600;
+          width: 32%;
+          color: #334155;
+        }
+        .pdf-issue-box {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-left: 4px solid #2f6fed;
+          padding: 7px 10px;
+          font-size: 9.5px;
+          margin-bottom: 10px;
+          border-radius: 3px;
+          line-height: 1.45;
+        }
+        .pdf-photo-card {
+          page-break-inside: avoid;
+          break-inside: avoid;
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
+          border-radius: 4px;
+          padding: 8px;
+          margin-bottom: 12px;
+        }
+        .pdf-photo-title {
+          font-weight: 700;
+          font-size: 10px;
+          color: #0f2942;
+          margin-bottom: 6px;
+          border-bottom: 1px solid #f1f5f9;
+          padding-bottom: 3px;
+        }
+        .pdf-photo-grid {
+          display: flex;
+          gap: 10px;
+        }
+        .pdf-photo-col {
+          flex: 1;
+          text-align: center;
+          width: 50%;
+        }
+        .pdf-photo-img {
+          width: 100%;
+          max-height: 220px;
+          object-fit: contain;
+          border: 1px solid #cbd5e1;
+          border-radius: 3px;
+          background: #f8fafc;
+          display: block;
+          margin: 0 auto;
+        }
+        .pdf-photo-empty {
+          height: 120px;
+          border: 1px dashed #cbd5e1;
+          background: #f8fafc;
+          border-radius: 3px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #94a3b8;
+          font-size: 9px;
+        }
+        .pdf-photo-lbl {
+          font-size: 9px;
+          font-weight: 600;
+          color: #475569;
+          margin-top: 4px;
+        }
+        .pdf-sign-table {
+          width: 100%;
+          margin-top: 25px;
+          border: none;
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .pdf-sign-table td {
+          border: none;
+          text-align: center;
+          width: 50%;
+          vertical-align: top;
+          padding: 0 15px;
+        }
+        .pdf-sign-role {
+          font-weight: 700;
+          font-size: 10px;
+          color: #0f2942;
+        }
+        .pdf-sign-space {
+          height: 65px;
+        }
+        .pdf-sign-name {
+          font-weight: 700;
+          font-size: 10px;
+          text-decoration: underline;
+          color: #1e293b;
+        }
+      </style>
+
+      <!-- HEADER RESMI -->
+      <div class="pdf-header">
+        <div>
+          <div class="pdf-header-title">LAPORAN PEMELIHARAAN (CM & PM)</div>
+          <div class="pdf-header-sub">PEMELIHARAAN OPERASIONAL & PERANGKAT TELEKOMUNIKASI BAKTI</div>
+        </div>
+        <div class="pdf-bakti-tag">BAKTI</div>
+      </div>
+
+      <!-- INFORMASI UMUM & ADMINISTRASI LOKASI -->
+      <table class="pdf-table pdf-table-admin">
+        <tbody>
+          <tr>
+            <td>Pemilik Site</td>
+            <td>${escapeHtml(siteOwner)}</td>
+          </tr>
+          <tr>
+            <td>Site ID (Kode Lokasi)</td>
+            <td><strong>${escapeHtml(siteId)}</strong></td>
+          </tr>
+          <tr>
+            <td>Nama Site (Nama Site/Lokasi)</td>
+            <td>${escapeHtml(siteName)}</td>
+          </tr>
+          <tr>
+            <td>Alamat Site/Lokasi</td>
+            <td>${escapeHtml(siteAddress)}</td>
+          </tr>
+          <tr>
+            <td>Provinsi / Kabupaten</td>
+            <td>${escapeHtml(province)} / ${escapeHtml(kabupaten)}</td>
+          </tr>
+          <tr>
+            <td>Kelurahan/Desa</td>
+            <td>${escapeHtml(desa)}</td>
+          </tr>
+          <tr>
+            <td>Latitude / Longitude</td>
+            <td>Lat: ${escapeHtml(latitude)} | Lon: ${escapeHtml(longitude)}</td>
+          </tr>
+          <tr>
+            <td>Nama & No HP PIC Lokasi</td>
+            <td>${escapeHtml(picName)} (${escapeHtml(picPhone)})</td>
+          </tr>
+          <tr>
+            <td>Petugas (Nama Teknisi)</td>
+            <td><strong>${escapeHtml(techName)}</strong></td>
+          </tr>
+          <tr>
+            <td>Tanggal Kedatangan</td>
+            <td>${escapeHtml(workDate)}</td>
+          </tr>
+          <tr>
+            <td>Waktu Kedatangan & Selesai</td>
+            <td>${escapeHtml(timeArrival)} s/d ${escapeHtml(timeDeparture)}</td>
+          </tr>
+          <tr>
+            <td>Kegiatan CM/PM & Layanan</td>
+            <td>${escapeHtml(kegiatanType)} (Layanan On-Site)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- BAGIAN I: PENJELASAN RINGKAS KONDISI -->
+      <div class="pdf-section-title">I. PENJELASAN RINGKAS KONDISI / GANGGUAN PADA SAAT KEDATANGAN</div>
+      <div class="pdf-issue-box">${escapeHtml(issueNotes)}</div>
+
+      <!-- BAGIAN II: STATUS OUTDOOR -->
+      <div class="pdf-section-title">II. STATUS OUTDOOR (SEBELUM & SESUDAH MAINTENANCE)</div>
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th style="width: 50%;">ITEM FISIK OUTDOOR</th>
+            <th style="width: 25%; text-align: center;">SEBELUM</th>
+            <th style="width: 25%; text-align: center;">SESUDAH</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${outRowsHtml}
+        </tbody>
+      </table>
+
+      <!-- BAGIAN III: STATUS INDOOR -->
+      <div class="pdf-section-title">III. STATUS INDOOR (SEBELUM & SESUDAH MAINTENANCE)</div>
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th style="width: 50%;">ITEM FISIK INDOOR</th>
+            <th style="width: 25%; text-align: center;">SEBELUM</th>
+            <th style="width: 25%; text-align: center;">SESUDAH</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${inRowsHtml}
+        </tbody>
+      </table>
+
+      <!-- BAGIAN IV: STATUS POWER -->
+      <div class="pdf-section-title">IV. STATUS POWER</div>
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th style="width: 50%;">PARAMETER POWER</th>
+            <th style="width: 25%; text-align: center;">SEBELUM</th>
+            <th style="width: 25%; text-align: center;">SESUDAH</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fisik UPS</td>
+            <td style="text-align: center;">${escapeHtml(upsB)}</td>
+            <td style="text-align: center;">${escapeHtml(upsA)}</td>
+          </tr>
+          <tr>
+            <td>Fisik Stabilizer</td>
+            <td style="text-align: center;">${escapeHtml(stabB)}</td>
+            <td style="text-align: center;">${escapeHtml(stabA)}</td>
+          </tr>
+          <tr>
+            <td>Source Power</td>
+            <td style="text-align: center;">${escapeHtml(pwrSrcB)}</td>
+            <td style="text-align: center;">${escapeHtml(pwrSrcA)}</td>
+          </tr>
+          <tr>
+            <td>Waktu Operasional</td>
+            <td style="text-align: center;">Hari: ${escapeHtml(opDays)} | Jam: ${escapeHtml(opHours)}</td>
+            <td style="text-align: center;">Hari: ${escapeHtml(opDays)} | Jam: ${escapeHtml(opHours)}</td>
+          </tr>
+          <tr>
+            <td>Tegangan Input Source Power</td>
+            <td style="text-align: center;">${escapeHtml(vIn)}</td>
+            <td style="text-align: center;">${escapeHtml(vIn)}</td>
+          </tr>
+          <tr>
+            <td>Tegangan Output UPS</td>
+            <td style="text-align: center;">${escapeHtml(vUps)}</td>
+            <td style="text-align: center;">${escapeHtml(vUps)}</td>
+          </tr>
+          <tr>
+            <td>Tegangan Output Stabilizer</td>
+            <td style="text-align: center;">${escapeHtml(vStab)}</td>
+            <td style="text-align: center;">${escapeHtml(vStab)}</td>
+          </tr>
+          <tr>
+            <td>Tegangan Grounding Power Source</td>
+            <td style="text-align: center;">${escapeHtml(vGnd)}</td>
+            <td style="text-align: center;">${escapeHtml(vGnd)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- BAGIAN V: ALTERNATIF JARINGAN -->
+      <div class="pdf-section-title">V. ALTERNATIF JARINGAN YANG ADA DI LOKASI</div>
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th style="width: 40%;">JARINGAN ALTERNATIF</th>
+            <th style="width: 30%; text-align: center;">STATUS</th>
+            <th style="width: 30%;">NAMA OPERATOR</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Selular (4G)</td>
+            <td style="text-align: center;">${escapeHtml(sel4g)}</td>
+            <td>${escapeHtml(op4g)}</td>
+          </tr>
+          <tr>
+            <td>Selular (3G / 2G)</td>
+            <td style="text-align: center;">${escapeHtml(sel3g)}</td>
+            <td>${escapeHtml(op3g)}</td>
+          </tr>
+          <tr>
+            <td>Radio Link (RL)</td>
+            <td style="text-align: center;">${escapeHtml(altRl)}</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td>Fiber Optic (Terpasang / Sekitar)</td>
+            <td style="text-align: center;">${escapeHtml(altFo)}</td>
+            <td>-</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- BAGIAN VI: PERANGKAT TERPASANG (SN) -->
+      <div class="pdf-section-title">VI. PERANGKAT TERPASANG (SN / MAC / ALIAS)</div>
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th style="width: 8%; text-align: center;">NO</th>
+            <th style="width: 34%;">PERANGKAT</th>
+            <th style="width: 29%;">SN SEBELUM</th>
+            <th style="width: 29%;">SN SESUDAH</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${snRowsHtml}
+        </tbody>
+      </table>
+
+      <!-- BAGIAN VII: DOKUMENTASI FOTO -->
+      <div class="pdf-section-title">VII. DOKUMENTASI FOTO SEBELUM & SESUDAH CM/PM</div>
+      ${photoPairsHtml}
+
+      <!-- LEMBAR PENGESAHAN -->
+      <table class="pdf-sign-table">
+        <tr>
+          <td>
+            <div class="pdf-sign-role">Petugas / Teknisi Pelaksana,</div>
+            <div class="pdf-sign-space"></div>
+            <div class="pdf-sign-name">( ${escapeHtml(techName)} )</div>
+          </td>
+          <td>
+            <div class="pdf-sign-role">Penanggung Jawab / PIC Lokasi,</div>
+            <div class="pdf-sign-space"></div>
+            <div class="pdf-sign-name">( ${escapeHtml(picName)} )</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+
+  const siteClean = (siteId || "SITE").replace(/[^a-zA-Z0-9]/g, "_");
+  const dateClean = (workDate || "").replace(/-/g, "");
+  const filename = `LAPORAN_BAKTI_${siteClean}_${dateClean}.pdf`;
+
+  return { container, filename };
 }
 
-// Handler Tombol: Unduh Word
-async function generateBaktiWord() {
+// Helper untuk mengekstrak Blob PDF dari html2pdf.js
+async function getPdfBlob(container, opt) {
+  if (typeof html2pdf === "undefined") {
+    throw new Error("Pustaka html2pdf belum siap dimuat.");
+  }
+  const worker = html2pdf().set(opt).from(container);
+
+  if (typeof worker.outputPdf === "function") {
+    try {
+      const b = await worker.outputPdf("blob");
+      if (b instanceof Blob) return b;
+    } catch (e) {}
+  }
+
+  if (typeof worker.output === "function") {
+    try {
+      const b = await worker.output("blob");
+      if (b instanceof Blob) return b;
+    } catch (e) {}
+  }
+
+  const pdfInstance = await worker.toPdf().get("pdf");
+  return pdfInstance.output("blob");
+}
+
+// Handler Tombol: Unduh Laporan PDF (.pdf)
+async function generateBaktiPdf() {
   const log = document.getElementById("statusLog");
   log.classList.add("show");
-  log.textContent = "⏳ Sedang menyusun dokumen Word Laporan BAKTI (.docx)...";
+  log.textContent = "⏳ Sedang menyusun dokumen PDF Laporan BAKTI (.pdf)...";
 
   try {
-    const blob = await buildBaktiDocx();
-    const siteId = (document.getElementById("siteId").value || "SITE").replace(/[^a-zA-Z0-9]/g, "_");
-    const workDate = document.getElementById("workDate").value.replace(/-/g, "");
-    const filename = `LAPORAN_BAKTI_${siteId}_${workDate}.docx`;
+    if (typeof html2pdf === "undefined") {
+      throw new Error("Pustaka html2pdf belum siap dimuat.");
+    }
+    const { container, filename } = buildBaktiPdfContainer();
+    document.body.appendChild(container);
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: filename,
+      image: { type: "jpeg", quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"] }
+    };
 
-    log.textContent = `✔ Berkas Word berhasil dibuat dan diunduh:\n📂 ${filename}`;
+    await html2pdf().set(opt).from(container).save();
+    document.body.removeChild(container);
+
+    log.textContent = `✔ Berkas PDF berhasil dibuat dan diunduh:\n📂 ${filename}`;
   } catch (err) {
-    log.textContent = `❌ Gagal membuat Word: ${err.message}`;
+    log.textContent = `❌ Gagal membuat PDF: ${err.message}`;
+    console.error("PDF generation error:", err);
   }
+}
+
+// Alias legacy untuk backward compatibility (menghasilkan PDF)
+async function generateBaktiWord() {
+  return await generateBaktiPdf();
 }
 
 // Handler Tombol: Kirim ke Drive & Sheets
@@ -1357,18 +1570,31 @@ async function submitBaktiCloud() {
   }
 
   log.classList.add("show");
-  log.textContent = "⏳ [1/3] Menghasilkan dokumen Word resmi...";
+  log.textContent = "⏳ [1/3] Menghasilkan dokumen PDF resmi...";
   btn.disabled = true;
 
   try {
-    const docxBlob = await buildBaktiDocx();
+    const { container, filename } = buildBaktiPdfContainer();
+    document.body.appendChild(container);
+
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: filename,
+      image: { type: "jpeg", quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"] }
+    };
+
+    const pdfBlob = await getPdfBlob(container, opt);
+    document.body.removeChild(container);
 
     log.textContent = "⏳ [2/3] Mengompres berkas dan menyiapkan payload...";
     const reader = new FileReader();
-    const docxBase64 = await new Promise((res, rej) => {
+    const pdfBase64 = await new Promise((res, rej) => {
       reader.onload = () => res(reader.result.split(",")[1]);
       reader.onerror = rej;
-      reader.readAsDataURL(docxBlob);
+      reader.readAsDataURL(pdfBlob);
     });
 
     log.textContent = "⏳ [3/3] Mengirimkan data dan berkas ke Google Drive & Sheets...";
@@ -1432,7 +1658,7 @@ async function submitBaktiCloud() {
       outdoorSummary: JSON.stringify(outdoorState),
       indoorSummary: JSON.stringify(indoorState),
       photos: photos,
-      docxBase64: docxBase64
+      pdfBase64: pdfBase64
     };
 
     const res = await fetch(gasUrl, {
@@ -1476,7 +1702,7 @@ async function submitBaktiCloud() {
     log.textContent = `🎉 LAPORAN BAKTI BERHASIL DIARSIPKAN!\n` +
       `Site ID : ${siteId} - ${siteName}\n` +
       `Teknisi : ${techName}\n` +
-      `✔ Dokumen Word (.docx) & foto-foto telah terunggah ke Google Drive.\n` +
+      `✔ Dokumen PDF (.pdf) & foto-foto telah terunggah ke Google Drive.\n` +
       `✔ Rekap laporan tercatat di Google Sheets.\n` +
       `✔ Database 'Data SN Perangkat' otomatis terupdate dengan data SN Sesudah!`;
 

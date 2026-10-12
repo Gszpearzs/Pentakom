@@ -24,10 +24,17 @@ function doPost(e) {
     var subFolder = driveFolder.createFolder(sitePrefix);
     subFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-    // 1. Simpan Berkas Dokumen Word (.docx)
-    var urlDocx = "";
-    if (data.docxBase64) {
-      urlDocx = saveBase64ToFolder(
+    // 1. Simpan Berkas Dokumen PDF (.pdf)
+    var urlPdf = "";
+    if (data.pdfBase64) {
+      urlPdf = saveBase64ToFolder(
+        subFolder,
+        data.pdfBase64,
+        "LAPORAN_BAKTI_" + sitePrefix + ".pdf",
+        "application/pdf"
+      );
+    } else if (data.docxBase64) {
+      urlPdf = saveBase64ToFolder(
         subFolder,
         data.docxBase64,
         "LAPORAN_BAKTI_" + sitePrefix + ".docx",
@@ -69,7 +76,7 @@ function doPost(e) {
       data.timeDeparture || "-",
       data.kegiatanType || "-",
       data.issueNotes || "-",
-      urlDocx,
+      urlPdf,
       subFolder.getUrl()
     ];
 
@@ -80,9 +87,9 @@ function doPost(e) {
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Laporan dan update Data SN Perangkat berhasil disimpan ke Google Drive dan Google Sheets.",
+      message: "Laporan PDF dan update Data SN Perangkat berhasil disimpan ke Google Drive dan Google Sheets.",
       siteId: data.siteId,
-      docxUrl: urlDocx,
+      pdfUrl: urlPdf,
       folderUrl: subFolder.getUrl(),
       snUpdate: snUpdateInfo
     })).setMimeType(ContentService.MimeType.JSON);
@@ -242,7 +249,7 @@ function setupHeaderIfEmpty(sheet) {
       "Provinsi", "Kabupaten", "Kelurahan/Desa", "Latitude", "Longitude",
       "Nama PIC", "No HP PIC", "Petugas / Teknisi", "Tanggal Kunjungan",
       "Waktu Tiba", "Waktu Selesai", "Kegiatan (CM/PM)", "Ringkasan Gangguan/Kondisi",
-      "Link File Word (.docx)", "Link Folder Bukti & Foto (Drive)"
+      "Link File PDF (.pdf)", "Link Folder Bukti & Foto (Drive)"
     ];
 
     sheet.appendRow(headers);
@@ -252,6 +259,13 @@ function setupHeaderIfEmpty(sheet) {
     headerRange.setFontColor("#ffffff");
     headerRange.setFontWeight("bold");
     sheet.setFrozenRows(1);
+  } else {
+    try {
+      var col19 = sheet.getRange(1, 19).getValue();
+      if (col19 && col19.toString().indexOf("Word") > -1) {
+        sheet.getRange(1, 19).setValue("Link File PDF (.pdf)");
+      }
+    } catch(e) {}
   }
 }
 

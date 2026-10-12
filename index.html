@@ -4,8 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Laporan Pemeliharaan BAKTI (CM & PM)</title>
-<!-- Pustaka docx untuk generate Word resmi di browser -->
-<script src="https://unpkg.com/docx@8.5.0/build/index.iife.js"></script>
+<!-- Pustaka html2pdf untuk generate Laporan PDF resmi -->
+<script src="html2pdf.bundle.min.js"></script>
+<script>
+  if (typeof html2pdf === "undefined") {
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>');
+  }
+</script>
 <style>
   :root {
     --navy: #0f2942;
@@ -801,7 +806,7 @@
     <div class="section-panel" id="tab4">
       <div class="card">
         <div class="card-title">VII. Foto Sebelum & Sesudah CM/PM (Standar BAKTI)</div>
-        <p style="font-size: .75rem; color: var(--muted); margin-bottom: 14px;">Semua foto berpasangan (Sebelum & Sesudah), otomatis dikompres dan dimasukkan ke berkas Word resmi.</p>
+        <p style="font-size: .75rem; color: var(--muted); margin-bottom: 14px;">Semua foto berpasangan (Sebelum & Sesudah), otomatis dikompres dan dimasukkan ke berkas PDF resmi.</p>
 
         <div id="photoPairsContainer">
           <!-- Rendered by JS -->
@@ -818,8 +823,8 @@
 <!-- STICKY ACTION FOOTER -->
 <div class="footer-bar">
   <div class="footer-inner">
-    <button type="button" class="btn-action btn-doc" id="btnWord" onclick="generateBaktiWord()">
-      📄 Unduh Word (.docx)
+    <button type="button" class="btn-action btn-doc" id="btnPdf" onclick="generateBaktiPdf()">
+      📄 Unduh Laporan (.pdf)
     </button>
     <button type="button" class="btn-action btn-submit" id="btnUpload" onclick="submitBaktiCloud()">
       🚀 Kirim ke Drive & Sheets
@@ -828,7 +833,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="locations.js?v=20261012_2326"></script>
-<script src="app.js?v=20261012_2326"></script>
+<script src="locations.js?v=20261012_2337"></script>
+<script src="app.js?v=20261012_2337"></script>
 </body>
 </html>
