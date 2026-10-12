@@ -42,7 +42,7 @@ def col_to_index(col_str):
 
 def normalize_owner(owner_str):
     if not owner_str:
-        return "PT Pentakom"
+        return ""
     s = owner_str.upper().replace('.', '').strip()
     s = re.sub(r'\s+', ' ', s)
     if 'PRIMACOM' in s:
@@ -52,7 +52,7 @@ def normalize_owner(owner_str):
     if 'DUTAKOM' in s:
         return 'PT Dutakom Wibawa Putra'
     if 'PENTAKOM' in s:
-        return 'PT Pentakom'
+        return ''
     return owner_str.strip()
 
 def clean_key(key):
@@ -303,7 +303,11 @@ def main():
             merged_map[site_id] = item_data
             added_count += 1
 
-    final_db = list(merged_map.values())
+    # Hapus pemilik PT Pentakom dari database
+    final_db = [
+        item for item in merged_map.values()
+        if not (item.get('pemilik') and 'pentakom' in str(item.get('pemilik')).lower())
+    ]
     print(f"Hasil Penggabungan:")
     print(f" - Site diperbarui : {updated_count}")
     print(f" - Site baru       : {added_count}")

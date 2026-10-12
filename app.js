@@ -235,7 +235,7 @@ function importDataTeknisFile(event) {
         if (!id && !nama) return;
 
         const rawOwner = getVal(r, ["PEMILIK SITE", "PEMILIK_SITE", "Pemilik Site", "Pemilik"]);
-        const pemilik = normalizeOwnerName(rawOwner) || "PT Pentakom";
+        const pemilik = normalizeOwnerName(rawOwner);
         const alamat = getVal(r, ["ALAMAT LENGKAP SITE / LOKASI", "ALAMAT", "Alamat Lengkap", "Alamat"]);
         const provinsi = getVal(r, ["PROVINSI", "Provinsi"]);
         const kabupaten = getVal(r, ["KABUPATEN / KOTA", "KABUPATEN_KOTA", "Kabupaten", "Kota"]);
@@ -360,7 +360,6 @@ function normalizeOwnerName(str) {
   if (s.includes("PRIMACOM")) return "PT Primacom Interbuana";
   if (s.includes("TRANSTEL")) return "PT Transtel Universal";
   if (s.includes("DUTAKOM")) return "PT Dutakom Wibawa Putra";
-  if (s.includes("PENTAKOM")) return "PT Pentakom";
   return str.trim();
 }
 

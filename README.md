@@ -45,7 +45,7 @@ Aplikasi web laporan pemeliharaan teknisi **Pentakom** (Corrective Maintenance &
 
 1. Buka link web dari HP/laptop.
 2. **Filter & Auto-Fill Data Site**:
-   - Pilih **Pemilik Site** (misal: `PT Dutakom Wibawa Putra`, `PT Primacom Interbuana`, `PT Transtel Universal`, atau `PT Pentakom`).
+   - Pilih **Pemilik Site** (misal: `PT Dutakom Wibawa Putra`, `PT Primacom Interbuana`, atau `PT Transtel Universal`).
    - Dropdown **Nama Site** dan **Site ID** otomatis hanya akan menampilkan site milik pemilik yang dipilih.
    - Pilih nama atau ID site, maka seluruh data (Site ID, Alamat, Provinsi, Kabupaten, Desa, Latitude, Longitude, dan Serial Number) akan terisi otomatis (*Auto-Fill*).
 3. Klik tombol **⚙️ Pengaturan** di baris atas untuk memasukkan Web App URL dari Langkah 1 *(cukup 1x simpan)*, atau mengunggah data site baru (.xlsx / .csv).
