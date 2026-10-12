@@ -316,6 +316,39 @@ def main():
     print(f" - Site baru       : {added_count}")
     print(f" - Total Database (dengan Pemilik) : {len(final_db)} site")
 
+    # 2.5 Sinkronisasi SN Perangkat dari Data_SN_Perangkat.csv jika ada (abaikan SN kosong)
+    sn_files = [os.path.join(base_dir, 'Data_SN_Perangkat.csv'), os.path.join(base_dir, 'Data_Perangkat.csv')]
+    for sn_f in sn_files:
+        if os.path.exists(sn_f):
+            try:
+                with open(sn_f, 'r', encoding='utf-8') as f:
+                    sn_reader = csv.reader(f, delimiter=';')
+                    sn_header = next(sn_reader, None)
+                    sn_matched = 0
+                    for row in sn_reader:
+                        if not row or not row[0].strip():
+                            continue
+                        s_id = row[0].strip()
+                        raw_vals = [c.strip() for c in row[1:9]]
+                        if not any(raw_vals):
+                            continue  # Abaikan baris SN yang kosong
+                        target_site = next((s for s in final_db if s.get('id', '').strip() == s_id), None)
+                        if target_site:
+                            target_site.setdefault('sn', {})
+                            if len(row) > 1 and row[1].strip(): target_site['sn']['modem'] = row[1].strip()
+                            if len(row) > 2 and row[2].strip(): target_site['sn']['router'] = row[2].strip()
+                            if len(row) > 3 and row[3].strip(): target_site['sn']['ap1'] = row[3].strip()
+                            if len(row) > 4 and row[4].strip(): target_site['sn']['ap2'] = row[4].strip()
+                            if len(row) > 5 and row[5].strip(): target_site['sn']['antenna'] = row[5].strip()
+                            if len(row) > 6 and row[6].strip(): target_site['sn']['transiver'] = row[6].strip()
+                            if len(row) > 7 and row[7].strip(): target_site['sn']['rack'] = row[7].strip()
+                            if len(row) > 8 and row[8].strip(): target_site['sn']['stabilizer'] = row[8].strip()
+                            sn_matched += 1
+                    print(f"✓ Berhasil memetakan {sn_matched} site dari '{os.path.basename(sn_f)}'.")
+                    break
+            except Exception as e:
+                print(f"Peringatan saat membaca file SN '{os.path.basename(sn_f)}': {e}")
+
     # Ringkasan per pemilik
     owner_stats = {}
     for s in final_db:

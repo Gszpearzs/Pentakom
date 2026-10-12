@@ -435,8 +435,14 @@ function handleOwnerFilter(ownerValue) {
       document.getElementById("desa").value = "";
       document.getElementById("latitude").value = "";
       document.getElementById("longitude").value = "";
+      SN_ITEMS.forEach((_, idx) => {
+        const elB = document.getElementById(`sn_b_${idx}`);
+        if (elB) elB.value = "";
+      });
       const notice = document.getElementById("siteAutoFillNotice");
       if (notice) notice.style.display = "none";
+      const snNotice = document.getElementById("snAutofillStatus");
+      if (snNotice) snNotice.style.display = "none";
     }
   }
 
@@ -515,14 +521,16 @@ function handleSiteSelect(query, type) {
     if (match.lat) document.getElementById("latitude").value = match.lat;
     if (match.lon) document.getElementById("longitude").value = match.lon;
 
-    // 3. Serial Number Perangkat Terpasang (SEBELUM) - Jika ada di database
+    // 3. Serial Number Perangkat Terpasang (Halaman 4 - Bagian VI)
+    // Otomatis terisi jika ada data SN, dan abaikan kolom SN yang kosong (biarkan blank)
     let snCount = 0;
     if (match.sn) {
       const setSn = (id, val) => {
         const el = document.getElementById(id);
         if (el) {
-          el.value = val || "";
-          if (val) snCount++;
+          const clean = (val !== null && val !== undefined) ? String(val).trim() : "";
+          el.value = clean;
+          if (clean) snCount++;
         }
       };
       setSn("sn_b_0", match.sn.ap1);
@@ -535,10 +543,29 @@ function handleSiteSelect(query, type) {
       setSn("sn_b_7", match.sn.stabilizer);
     }
 
+    // Update banner status di Halaman 4 (Tab 4)
+    const snNotice = document.getElementById("snAutofillStatus");
+    if (snNotice) {
+      if (snCount > 0) {
+        snNotice.style.display = "block";
+        snNotice.innerHTML = `✅ <strong>Auto-Fill SN Berhasil:</strong> Otomatis mengisi <strong>${snCount} nomor seri</strong> perangkat dari Site ID: <em>${match.id}</em> (${match.nama}). Kolom yang tidak memiliki nomor seri dibiarkan kosong.`;
+        snNotice.style.background = "#e8f8f5";
+        snNotice.style.color = "#117a65";
+        snNotice.style.border = "1px solid #a3e4d7";
+      } else {
+        snNotice.style.display = "block";
+        snNotice.innerHTML = `ℹ️ Site ID <strong>${match.id}</strong> (${match.nama}) tidak memiliki data nomor seri (SN) tersimpan. Kolom nomor seri dibiarkan kosong.`;
+        snNotice.style.background = "#fef9e7";
+        snNotice.style.color = "#7d6608";
+        snNotice.style.border = "1px solid #f9e79f";
+      }
+    }
+
+    // Update notice di Halaman 1 (Tab 1)
     if (notice) {
       notice.style.display = "block";
       const ownerLabel = match.pemilik ? ` [${match.pemilik}]` : "";
-      const snLabel = snCount > 0 ? ` & ${snCount} Serial Number perangkat` : "";
+      const snLabel = snCount > 0 ? ` & ${snCount} Serial Number perangkat (Halaman 4)` : "";
       notice.innerHTML = `✅ <strong>Auto-Fill Berhasil:</strong> Data teknis <em>${match.nama}</em> (${match.id})${ownerLabel} telah otomatis mengisi Alamat, Provinsi, Kabupaten, Koordinat GPS${snLabel}!`;
       notice.style.background = "#e8f8f5";
       notice.style.color = "#117a65";
@@ -577,6 +604,8 @@ function clearAllSn() {
     if (elB) elB.value = "";
     if (elA) elA.value = "";
   });
+  const snNotice = document.getElementById("snAutofillStatus");
+  if (snNotice) snNotice.style.display = "none";
   saveDraft();
 }
 
