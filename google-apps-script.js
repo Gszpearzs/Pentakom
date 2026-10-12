@@ -1,21 +1,5 @@
-/**
- * ==============================================================================
- * BACKEND GOOGLE APPS SCRIPT: PENTAKOM CM-PM FORM
- * ==============================================================================
- * Petunjuk Pemasangan:
- * 1. Buka Google Sheets baru di Google Drive Anda (beri nama misal: "Rekap Laporan Pentakom").
- * 2. Klik menu "Ekstensi" (Extensions) -> "Apps Script".
- * 3. Hapus semua kode default di Apps Script, lalu SALIN & TEMPEL (Copy-Paste) seluruh isi file ini.
- * 4. Klik tombol "Deploy" (Terapkan) di pojok kanan atas -> pilih "New deployment" (Deployment baru).
- * 5. Klik ikon gerigi (Select type) -> pilih "Web app".
- * 6. Atur konfigurasi berikut:
- *    - Description: Pentakom CM-PM Backend
- *    - Execute as: Me (email akun Google Anda)
- *    - Who has access: Anyone (PENTING! Agar form di web bisa mengirim data tanpa login akun Google)
- * 7. Klik "Deploy", izinkan akses izin akun Google (Review Permissions -> Advanced -> Go to script (unsafe) -> Allow).
- * 8. Salin "Web app URL" (akhiran /exec) dan masukkan ke tombol ⚙️ di web form Anda!
- * ==============================================================================
- */
+// BACKEND GOOGLE APPS SCRIPT - PENTAKOM CM-PM FORM
+// Deploy sebagai Web app: Execute as = Me, Who has access = Anyone
 
 // Nama folder di Google Drive tempat foto & tanda tangan disimpan
 var FOLDER_NAME = "Pentakom CM-PM Bukti Foto";
