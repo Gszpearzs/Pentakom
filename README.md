@@ -43,7 +43,36 @@ Aplikasi web laporan pemeliharaan teknisi **Pentakom** (Corrective Maintenance &
 
 ## 📱 Penggunaan untuk Teknisi
 
-1. Buka link web dari HP.
-2. Klik tombol **⚙️ Pengaturan** di baris atas untuk memasukkan Web App URL dari Langkah 1 *(cukup 1x simpan)*.
-3. Isi data pemeliharaan, lakukan pengecekan status (Baik/Buruk), dan ambil foto dokumentasi di lapangan.
-4. Klik **💾 Simpan Word (.docx)** untuk download salinan berkas Word di HP, atau klik **🚀 Selesai & Upload ke Drive** untuk langsung mengirimkan laporan ke arsip pusat Pentakom.
+1. Buka link web dari HP/laptop.
+2. **Filter & Auto-Fill Data Site**:
+   - Pilih **Pemilik Site** (misal: `PT Dutakom Wibawa Putra`, `PT Primacom Interbuana`, `PT Transtel Universal`, atau `PT Pentakom`).
+   - Dropdown **Nama Site** dan **Site ID** otomatis hanya akan menampilkan site milik pemilik yang dipilih.
+   - Pilih nama atau ID site, maka seluruh data (Site ID, Alamat, Provinsi, Kabupaten, Desa, Latitude, Longitude, dan Serial Number) akan terisi otomatis (*Auto-Fill*).
+3. Klik tombol **⚙️ Pengaturan** di baris atas untuk memasukkan Web App URL dari Langkah 1 *(cukup 1x simpan)*, atau mengunggah data site baru (.xlsx / .csv).
+4. Isi checklist kondisi, checklist tegangan/power (Ada / Tidak Ada), dan ambil foto dokumentasi di lapangan.
+5. Klik **💾 Simpan Word (.docx)** untuk download berkas Word resmi di HP, atau klik **🚀 Selesai & Upload ke Drive** untuk merekap ke Sheets dan Drive.
+
+---
+
+## 📊 Manajemen Data Teknis Site (Gambar 1 Format)
+
+File data teknis menggunakan standar kolom sesuai Gambar 1:
+1. `Pemilik Site`
+2. `Site ID ( Kode Lokasi )`
+3. `Nama Site ( Nama Lokasi )`
+4. `Alamat Lengkap Site / Lokasi`
+5. `Provinsi`
+6. `Kabupaten / Kota`
+7. `Kelurahan / Desa`
+8. `Latitude (Desimal)`
+9. `Longitude (Desimal)`
+
+### Memperbarui Database:
+- **Cara 1 (Langsung di Web)**: Buka drawer **⚙️ Pengaturan** di web, klik **📥 Upload Excel / CSV**, pilih berkas Excel / CSV Anda.
+- **Cara 2 (Otomatisasi Skrip Python)**:
+  Jalankan perintah berikut di terminal:
+  ```bash
+  python3 update_locations_from_excel.py
+  ```
+  Skrip ini akan otomatis membaca `Data Site - Teknisi.xlsx` / `Data Site - Teknisi.csv`, memperbarui `locations.js`, dan menyinkronkan template `Template_Data_Teknis_Pentakom.xlsx` & `.csv`.
+

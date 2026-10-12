@@ -404,7 +404,8 @@
   <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
     <input type="file" id="fileDataTeknis" accept=".xlsx,.xls,.csv" style="display:none;" onchange="importDataTeknisFile(event)">
     <button type="button" class="config-btn" style="background:var(--navy); color:#fff;" onclick="document.getElementById('fileDataTeknis').click()">📥 Upload Excel / CSV</button>
-    <a href="Template_Data_Teknis_Pentakom.xlsx" download class="config-btn" style="text-decoration:none; display:inline-block; line-height: 24px;">📄 Unduh Template .xlsx</a>
+    <a href="Template_Data_Teknis_Pentakom.xlsx" download class="config-btn" style="text-decoration:none; display:inline-block; line-height: 24px;">📄 Unduh Template (.xlsx)</a>
+    <a href="Template_Data_Teknis_Pentakom.csv" download class="config-btn" style="text-decoration:none; display:inline-block; line-height: 24px;">📄 Unduh Template (.csv)</a>
     <span id="importMsg" style="font-size: .75rem; color: var(--green); font-weight: 700;"></span>
   </div>
 </div>
@@ -434,12 +435,15 @@
         <div class="card-title">Informasi Header & Pemilik Site</div>
         
         <label>Pemilik Site</label>
-        <select id="siteOwner">
-          <option value="PT Transtel Universal">PT Transtel Universal</option>
-          <option value="PT Primacom Interbuana">PT Primacom Interbuana</option>
+        <select id="siteOwner" onchange="handleOwnerFilter(this.value)">
+          <option value="">-- Pilih Pemilik Site (Filter Daftar Site) --</option>
           <option value="PT Dutakom Wibawa Putra">PT Dutakom Wibawa Putra</option>
+          <option value="PT Primacom Interbuana">PT Primacom Interbuana</option>
+          <option value="PT Transtel Universal">PT Transtel Universal</option>
           <option value="PT Pentakom">PT Pentakom</option>
+          <option value="ALL">-- Tampilkan Semua Pemilik Site --</option>
         </select>
+        <div id="ownerFilterStatus" style="font-size: 0.75rem; color: var(--muted); margin: 4px 0 10px;"></div>
 
         <div class="row2">
           <div style="position: relative;">

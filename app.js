@@ -203,32 +203,67 @@ function importDataTeknisFile(event) {
         return;
       }
 
+      // Helper pencari nilai kolom fleksibel (mendukung format Gambar 1)
+      const cleanKey = (k) => String(k || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const getVal = (r, candidates) => {
+        // 1. Direct key lookup
+        for (const c of candidates) {
+          if (r[c] !== undefined && r[c] !== null && String(r[c]).trim() !== "") {
+            return String(r[c]).trim();
+          }
+        }
+        // 2. Normalized key lookup
+        const rKeys = Object.keys(r);
+        for (const c of candidates) {
+          const target = cleanKey(c);
+          for (const k of rKeys) {
+            const ck = cleanKey(k);
+            if (ck === target || ck.includes(target)) {
+              if (r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") {
+                return String(r[k]).trim();
+              }
+            }
+          }
+        }
+        return "";
+      };
+
       const imported = [];
       rows.forEach((r) => {
-        const id = (r.SITE_ID || r.site_id || r.id || "").toString().trim();
-        const nama = (r.NAMA_SITE || r.nama_site || r.nama || "").toString().trim();
+        const id = getVal(r, ["SITE ID ( KODE LOKASI )", "SITE_ID", "Site ID", "ID", "KODE LOKASI"]);
+        const nama = getVal(r, ["NAMA SITE ( NAMA LOKASI )", "NAMA_SITE", "Nama Site", "Nama", "NAMA LOKASI"]);
         if (!id && !nama) return;
+
+        const rawOwner = getVal(r, ["PEMILIK SITE", "PEMILIK_SITE", "Pemilik Site", "Pemilik"]);
+        const pemilik = normalizeOwnerName(rawOwner) || "PT Pentakom";
+        const alamat = getVal(r, ["ALAMAT LENGKAP SITE / LOKASI", "ALAMAT", "Alamat Lengkap", "Alamat"]);
+        const provinsi = getVal(r, ["PROVINSI", "Provinsi"]);
+        const kabupaten = getVal(r, ["KABUPATEN / KOTA", "KABUPATEN_KOTA", "Kabupaten", "Kota"]);
+        const desa = getVal(r, ["KELURAHAN / DESA", "KELURAHAN_DESA", "Kelurahan", "Desa"]);
+        const latRaw = getVal(r, ["LATITUDE (DESIMAL)", "LATITUDE", "Latitude", "Lat"]);
+        const lonRaw = getVal(r, ["LONGITUDE (DESIMAL)", "LONGITUDE", "Longitude", "Lon", "Long"]);
 
         imported.push({
           id: id,
           nama: nama,
-          pemilik: (r.PEMILIK_SITE || r.pemilik_site || "PT Pentakom").toString().trim(),
-          tipe: (r.TIPE_LOKASI || r.tipe_lokasi || r.tipe || "").toString().trim(),
-          kategori: (r.KATEGORI || r.kategori || "").toString().trim(),
-          alamat: (r.ALAMAT || r.alamat || "").toString().trim(),
-          provinsi: (r.PROVINSI || r.provinsi || "").toString().trim(),
-          kabupaten: (r.KABUPATEN_KOTA || r.kabupaten_kota || r.kabupaten || "").toString().trim(),
-          lat: parseFloat(r.LATITUDE || r.latitude || r.lat) || (r.LATITUDE || r.latitude || ""),
-          lon: parseFloat(r.LONGITUDE || r.longitude || r.lon) || (r.LONGITUDE || r.longitude || ""),
+          pemilik: pemilik,
+          tipe: getVal(r, ["TIPE_LOKASI", "Tipe Lokasi", "Tipe"]) || "Kantor Pemerintahan",
+          kategori: getVal(r, ["KATEGORI", "Kategori"]),
+          alamat: alamat,
+          provinsi: provinsi,
+          kabupaten: kabupaten,
+          desa: desa,
+          lat: parseFloat(latRaw) || latRaw,
+          lon: parseFloat(lonRaw) || lonRaw,
           sn: {
-            modem: (r.SN_MODEM || r.sn_modem || "").toString().trim(),
-            router: (r.SN_ROUTER || r.sn_router || "").toString().trim(),
-            ap1: (r.SN_AP_INDOOR || r.sn_ap_indoor || r.ap1 || "").toString().trim(),
-            ap2: (r.SN_AP_OUTDOOR || r.sn_ap_outdoor || r.ap2 || "").toString().trim(),
-            antenna: (r.SN_ANTENNA || r.sn_antenna || "").toString().trim(),
-            transiver: (r.SN_BUC_TRANSCEIVER || r.sn_buc_transceiver || r.transiver || "").toString().trim(),
-            rack: (r.SN_RACK || r.sn_rack || "").toString().trim(),
-            stabilizer: (r.SN_STABILIZER || r.sn_stabilizer || "").toString().trim()
+            modem: getVal(r, ["SN_MODEM", "SN MODEM", "MODEM"]),
+            router: getVal(r, ["SN_ROUTER", "SN ROUTER", "ROUTER"]),
+            ap1: getVal(r, ["SN_AP_INDOOR", "SN AP INDOOR", "AP1", "AP INDOOR"]),
+            ap2: getVal(r, ["SN_AP_OUTDOOR", "SN AP OUTDOOR", "AP2", "AP OUTDOOR"]),
+            antenna: getVal(r, ["SN_ANTENNA", "SN ANTENNA", "ANTENNA"]),
+            transiver: getVal(r, ["SN_BUC_TRANSCEIVER", "SN BUC", "BUC", "TRANSCEIVER"]),
+            rack: getVal(r, ["SN_RACK", "SN RACK", "RACK"]),
+            stabilizer: getVal(r, ["SN_STABILIZER", "SN STABILIZER", "STABILIZER"])
           }
         });
       });
@@ -244,12 +279,22 @@ function importDataTeknisFile(event) {
       // Gabungkan ke LOCATION_DB
       if (typeof LOCATION_DB !== "undefined" && Array.isArray(LOCATION_DB)) {
         const map = new Map(LOCATION_DB.map((s) => [s.id, s]));
-        imported.forEach((c) => map.set(c.id, c));
+        imported.forEach((c) => {
+          if (map.has(c.id)) {
+            const existing = map.get(c.id);
+            // Merge SN jika ada
+            c.sn = { ...existing.sn, ...c.sn };
+            map.set(c.id, { ...existing, ...c });
+          } else {
+            map.set(c.id, c);
+          }
+        });
         LOCATION_DB.length = 0;
         LOCATION_DB.push(...map.values());
       }
 
-      initSiteDatalists();
+      const curOwner = document.getElementById("siteOwner") ? document.getElementById("siteOwner").value : "";
+      initSiteDatalists(curOwner);
 
       const importMsg = document.getElementById("importMsg");
       if (importMsg) {
@@ -270,16 +315,35 @@ function importDataTeknisFile(event) {
   }
 }
 
-// Helper parser CSV sederhana
+// Helper parser CSV fleksibel (Mendukung pemisah semicolon ';' dan comma ',')
 function parseCsvToObjects(text) {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  const clean = text.replace(/^\uFEFF/, "");
+  const lines = clean.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(",").map((h) => h.replace(/^["']|["']$/g, "").trim().toUpperCase());
+  const firstLine = lines[0];
+  const semiCount = (firstLine.match(/;/g) || []).length;
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const tabCount = (firstLine.match(/\t/g) || []).length;
+  let sep = ",";
+  if (semiCount > commaCount && semiCount > tabCount) sep = ";";
+  else if (tabCount > commaCount && tabCount > semiCount) sep = "\t";
+
+  const splitLine = (l) => {
+    if (sep === ";") {
+      return l.split(/;(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((c) => c.replace(/^["']|["']$/g, "").trim());
+    } else if (sep === "\t") {
+      return l.split(/\t/).map((c) => c.replace(/^["']|["']$/g, "").trim());
+    } else {
+      return l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((c) => c.replace(/^["']|["']$/g, "").trim());
+    }
+  };
+
+  const headers = splitLine(lines[0]);
   const list = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((c) => c.replace(/^["']|["']$/g, "").trim());
+    const cols = splitLine(lines[i]);
     const obj = {};
     headers.forEach((h, idx) => {
       obj[h] = cols[idx] !== undefined ? cols[idx] : "";
@@ -289,8 +353,19 @@ function parseCsvToObjects(text) {
   return list;
 }
 
-// Inisialisasi Datalist Pencarian Site
-function initSiteDatalists() {
+// Normalisasi nama pemilik site untuk kecocokan fleksibel
+function normalizeOwnerName(str) {
+  if (!str) return "";
+  const s = str.toUpperCase().replace(/\./g, "").replace(/\s+/g, " ").trim();
+  if (s.includes("PRIMACOM")) return "PT Primacom Interbuana";
+  if (s.includes("TRANSTEL")) return "PT Transtel Universal";
+  if (s.includes("DUTAKOM")) return "PT Dutakom Wibawa Putra";
+  if (s.includes("PENTAKOM")) return "PT Pentakom";
+  return str.trim();
+}
+
+// Inisialisasi Datalist Pencarian Site (Mendukung Filter per Pemilik Site)
+function initSiteDatalists(filterOwner = "") {
   if (typeof LOCATION_DB === "undefined" || !Array.isArray(LOCATION_DB)) return;
   const dlId = document.getElementById("siteIdDatalist");
   const dlName = document.getElementById("siteNameDatalist");
@@ -299,7 +374,18 @@ function initSiteDatalists() {
   dlId.innerHTML = "";
   dlName.innerHTML = "";
 
-  LOCATION_DB.forEach((loc) => {
+  const normTarget = normalizeOwnerName(filterOwner);
+  const isAll = !filterOwner || filterOwner === "ALL";
+
+  let filtered = LOCATION_DB;
+  if (!isAll && normTarget) {
+    filtered = LOCATION_DB.filter((loc) => {
+      const locOwner = normalizeOwnerName(loc.pemilik || "");
+      return locOwner === normTarget;
+    });
+  }
+
+  filtered.forEach((loc) => {
     const optId = document.createElement("option");
     optId.value = loc.id;
     optId.label = loc.nama;
@@ -312,6 +398,50 @@ function initSiteDatalists() {
     optName.textContent = `${loc.nama} (${loc.id})`;
     dlName.appendChild(optName);
   });
+
+  const statusEl = document.getElementById("ownerFilterStatus");
+  if (statusEl) {
+    if (!isAll && normTarget) {
+      statusEl.innerHTML = `🔍 Menampilkan <strong>${filtered.length} site</strong> milik <strong>${normTarget}</strong>.`;
+      statusEl.style.color = "var(--accent)";
+    } else {
+      statusEl.innerHTML = `🌐 Menampilkan semua <strong>${filtered.length} site</strong>.`;
+      statusEl.style.color = "var(--muted)";
+    }
+  }
+}
+
+// Handler saat Pemilik Site Dipilih di Dropdown
+function handleOwnerFilter(ownerValue) {
+  initSiteDatalists(ownerValue);
+
+  // Jika input siteId atau siteName sudah terisi, periksa apakah masih sesuai pemilik
+  const curSiteId = (document.getElementById("siteId").value || "").trim().toLowerCase();
+  const curSiteName = (document.getElementById("siteName").value || "").trim().toLowerCase();
+  
+  if (ownerValue && ownerValue !== "ALL" && (curSiteId || curSiteName)) {
+    const normTarget = normalizeOwnerName(ownerValue);
+    const stillValid = LOCATION_DB.some((loc) => {
+      const locOwner = normalizeOwnerName(loc.pemilik || "");
+      if (locOwner !== normTarget) return false;
+      return loc.id.toLowerCase() === curSiteId || loc.nama.toLowerCase() === curSiteName;
+    });
+
+    if (!stillValid) {
+      document.getElementById("siteId").value = "";
+      document.getElementById("siteName").value = "";
+      document.getElementById("siteAddress").value = "";
+      document.getElementById("province").value = "";
+      document.getElementById("kabupaten").value = "";
+      document.getElementById("desa").value = "";
+      document.getElementById("latitude").value = "";
+      document.getElementById("longitude").value = "";
+      const notice = document.getElementById("siteAutoFillNotice");
+      if (notice) notice.style.display = "none";
+    }
+  }
+
+  saveDraft();
 }
 
 // Auto-Fill Otomatis dari Data Teknis saat Site Dipilih / Diketik
@@ -320,9 +450,19 @@ function handleSiteSelect(query, type) {
   if (!query || query.trim().length < 2) return;
 
   const q = query.trim().toLowerCase();
+  const ownerEl = document.getElementById("siteOwner");
+  const currentOwner = ownerEl ? ownerEl.value : "";
+  const normCurrentOwner = (currentOwner && currentOwner !== "ALL") ? normalizeOwnerName(currentOwner) : "";
 
-  // 1. Cari exact match terlebih dahulu agar tidak menimpa saat baru mengetik
-  let match = LOCATION_DB.find((loc) => {
+  // Prioritaskan pencarian di kumpulan site milik pemilik yang sedang dipilih
+  let pool = LOCATION_DB;
+  if (normCurrentOwner) {
+    const ownerPool = LOCATION_DB.filter((loc) => normalizeOwnerName(loc.pemilik || "") === normCurrentOwner);
+    if (ownerPool.length > 0) pool = ownerPool;
+  }
+
+  // 1. Cari exact match terlebih dahulu di pool
+  let match = pool.find((loc) => {
     if (type === "id") {
       return loc.id.toLowerCase() === q;
     } else {
@@ -330,20 +470,41 @@ function handleSiteSelect(query, type) {
     }
   });
 
-  // 2. Jika tidak cocok, coba exact match silang (id atau nama)
+  // 2. Jika tidak cocok, coba exact match silang di pool
   if (!match) {
-    match = LOCATION_DB.find((loc) => loc.id.toLowerCase() === q || loc.nama.toLowerCase() === q);
+    match = pool.find((loc) => loc.id.toLowerCase() === q || loc.nama.toLowerCase() === q);
   }
 
-  // 3. Jika query panjang (>= 6 karakter) dan belum match, coba kecocokan penuh ID
-  if (!match && q.length >= 6) {
-    match = LOCATION_DB.find((loc) => loc.id.toLowerCase() === q);
+  // 3. Jika belum cocok di pool terfilter, cari di seluruh database
+  if (!match) {
+    match = LOCATION_DB.find((loc) => loc.id.toLowerCase() === q || loc.nama.toLowerCase() === q);
   }
 
   const notice = document.getElementById("siteAutoFillNotice");
 
   if (match) {
-    // 1. Informasi Lokasi & Administrasi
+    // 1. Sinkronisasi Pemilik Site otomatis
+    if (match.pemilik && ownerEl) {
+      const normMatchOwner = normalizeOwnerName(match.pemilik);
+      let optFound = false;
+      for (let i = 0; i < ownerEl.options.length; i++) {
+        if (normalizeOwnerName(ownerEl.options[i].value) === normMatchOwner) {
+          ownerEl.selectedIndex = i;
+          optFound = true;
+          break;
+        }
+      }
+      if (!optFound && normMatchOwner) {
+        const newOpt = document.createElement("option");
+        newOpt.value = normMatchOwner;
+        newOpt.textContent = normMatchOwner;
+        ownerEl.appendChild(newOpt);
+        ownerEl.value = normMatchOwner;
+      }
+      initSiteDatalists(normMatchOwner);
+    }
+
+    // 2. Informasi Lokasi & Administrasi (Gambar 1)
     const elSiteId = document.getElementById("siteId");
     const elSiteName = document.getElementById("siteName");
     if (elSiteId) elSiteId.value = match.id;
@@ -351,40 +512,32 @@ function handleSiteSelect(query, type) {
     if (match.alamat) document.getElementById("siteAddress").value = match.alamat;
     if (match.provinsi) document.getElementById("province").value = match.provinsi;
     if (match.kabupaten) document.getElementById("kabupaten").value = match.kabupaten;
+    if (match.desa) document.getElementById("desa").value = match.desa;
     if (match.lat) document.getElementById("latitude").value = match.lat;
     if (match.lon) document.getElementById("longitude").value = match.lon;
 
-    // 2. Serial Number Perangkat Terpasang (SEBELUM) - Otomatis dari Data Teknis
+    // 3. Serial Number Perangkat Terpasang (SEBELUM) - Jika ada di database
     let snCount = 0;
     if (match.sn) {
-      // 0: AP Indoor -> match.sn.ap1
-      const elAp1 = document.getElementById("sn_b_0");
-      if (elAp1 && match.sn.ap1) { elAp1.value = match.sn.ap1; snCount++; }
-
-      // 1: AP Outdoor -> match.sn.ap2
-      const elAp2 = document.getElementById("sn_b_1");
-      if (elAp2 && match.sn.ap2) { elAp2.value = match.sn.ap2; snCount++; }
-
-      // 2: ROUTER -> match.sn.router
-      const elRouter = document.getElementById("sn_b_2");
-      if (elRouter && match.sn.router) { elRouter.value = match.sn.router; snCount++; }
-
-      // 3: MODEM -> match.sn.modem
-      const elModem = document.getElementById("sn_b_3");
-      if (elModem && match.sn.modem) { elModem.value = match.sn.modem; snCount++; }
-
-      // 5: BUC / Transceiver -> match.sn.transiver
-      const elBuc = document.getElementById("sn_b_5");
-      if (elBuc && match.sn.transiver) { elBuc.value = match.sn.transiver; snCount++; }
-
-      // 7: STABILIZER -> match.sn.stabilizer
-      const elStab = document.getElementById("sn_b_7");
-      if (elStab && match.sn.stabilizer) { elStab.value = match.sn.stabilizer; snCount++; }
+      const setSn = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val) { el.value = val; snCount++; }
+      };
+      setSn("sn_b_0", match.sn.ap1);
+      setSn("sn_b_1", match.sn.ap2);
+      setSn("sn_b_2", match.sn.router);
+      setSn("sn_b_3", match.sn.modem);
+      setSn("sn_b_4", match.sn.antenna);
+      setSn("sn_b_5", match.sn.transiver);
+      setSn("sn_b_6", match.sn.rack);
+      setSn("sn_b_7", match.sn.stabilizer);
     }
 
     if (notice) {
       notice.style.display = "block";
-      notice.innerHTML = `✅ <strong>Auto-Fill Berhasil:</strong> Data teknis <em>${match.nama}</em> (${match.id}) telah otomatis mengisi Alamat, Provinsi, Kabupaten, Koordinat GPS, dan ${snCount} Serial Number perangkat!`;
+      const ownerLabel = match.pemilik ? ` [${match.pemilik}]` : "";
+      const snLabel = snCount > 0 ? ` & ${snCount} Serial Number perangkat` : "";
+      notice.innerHTML = `✅ <strong>Auto-Fill Berhasil:</strong> Data teknis <em>${match.nama}</em> (${match.id})${ownerLabel} telah otomatis mengisi Alamat, Provinsi, Kabupaten, Koordinat GPS${snLabel}!`;
       notice.style.background = "#e8f8f5";
       notice.style.color = "#117a65";
       notice.style.border = "1px solid #a3e4d7";
@@ -706,6 +859,7 @@ function restoreDraft() {
     };
 
     setVal("siteOwner", d.siteOwner);
+    if (d.siteOwner) initSiteDatalists(d.siteOwner);
     setVal("siteId", d.siteId);
     setVal("siteName", d.siteName);
     setVal("siteAddress", d.siteAddress);
