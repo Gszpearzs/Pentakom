@@ -145,6 +145,7 @@ const photos = {};
 // Inisialisasi
 document.addEventListener("DOMContentLoaded", () => {
   initDateDefaults();
+  loadCustomLocations();
   initSiteDatalists();
   renderInspectionTables();
   renderSnTable();
@@ -153,6 +154,140 @@ document.addEventListener("DOMContentLoaded", () => {
   restoreDraft();
   setupAutoSave();
 });
+
+// Memuat data teknis kustom dari localStorage jika ada
+function loadCustomLocations() {
+  try {
+    const raw = localStorage.getItem("pentakom_custom_locations");
+    if (raw) {
+      const custom = JSON.parse(raw);
+      if (Array.isArray(custom) && custom.length > 0) {
+        if (typeof LOCATION_DB !== "undefined" && Array.isArray(LOCATION_DB)) {
+          const map = new Map(LOCATION_DB.map((s) => [s.id, s]));
+          custom.forEach((c) => {
+            if (c.id) map.set(c.id, c);
+          });
+          LOCATION_DB.length = 0;
+          LOCATION_DB.push(...map.values());
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Gagal membaca custom locations:", e);
+  }
+}
+
+// Impor file data teknis (.xlsx / .csv) langsung dari browser
+function importDataTeknisFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const isXlsx = file.name.endsWith(".xlsx") || file.name.endsWith(".xls");
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      let rows = [];
+      if (isXlsx && typeof XLSX !== "undefined") {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheet = workbook.SheetNames[0];
+        rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+      } else {
+        const text = typeof e.target.result === "string" ? e.target.result : new TextDecoder().decode(e.target.result);
+        rows = parseCsvToObjects(text);
+      }
+
+      if (!rows || rows.length === 0) {
+        alert("File kosong atau format tidak sesuai.");
+        return;
+      }
+
+      const imported = [];
+      rows.forEach((r) => {
+        const id = (r.SITE_ID || r.site_id || r.id || "").toString().trim();
+        const nama = (r.NAMA_SITE || r.nama_site || r.nama || "").toString().trim();
+        if (!id && !nama) return;
+
+        imported.push({
+          id: id,
+          nama: nama,
+          pemilik: (r.PEMILIK_SITE || r.pemilik_site || "PT Pentakom").toString().trim(),
+          tipe: (r.TIPE_LOKASI || r.tipe_lokasi || r.tipe || "").toString().trim(),
+          kategori: (r.KATEGORI || r.kategori || "").toString().trim(),
+          alamat: (r.ALAMAT || r.alamat || "").toString().trim(),
+          provinsi: (r.PROVINSI || r.provinsi || "").toString().trim(),
+          kabupaten: (r.KABUPATEN_KOTA || r.kabupaten_kota || r.kabupaten || "").toString().trim(),
+          lat: parseFloat(r.LATITUDE || r.latitude || r.lat) || (r.LATITUDE || r.latitude || ""),
+          lon: parseFloat(r.LONGITUDE || r.longitude || r.lon) || (r.LONGITUDE || r.longitude || ""),
+          sn: {
+            modem: (r.SN_MODEM || r.sn_modem || "").toString().trim(),
+            router: (r.SN_ROUTER || r.sn_router || "").toString().trim(),
+            ap1: (r.SN_AP_INDOOR || r.sn_ap_indoor || r.ap1 || "").toString().trim(),
+            ap2: (r.SN_AP_OUTDOOR || r.sn_ap_outdoor || r.ap2 || "").toString().trim(),
+            antenna: (r.SN_ANTENNA || r.sn_antenna || "").toString().trim(),
+            transiver: (r.SN_BUC_TRANSCEIVER || r.sn_buc_transceiver || r.transiver || "").toString().trim(),
+            rack: (r.SN_RACK || r.sn_rack || "").toString().trim(),
+            stabilizer: (r.SN_STABILIZER || r.sn_stabilizer || "").toString().trim()
+          }
+        });
+      });
+
+      if (imported.length === 0) {
+        alert("Tidak ada baris data site valid yang ditemukan di file.");
+        return;
+      }
+
+      // Simpan ke localStorage
+      localStorage.setItem("pentakom_custom_locations", JSON.stringify(imported));
+
+      // Gabungkan ke LOCATION_DB
+      if (typeof LOCATION_DB !== "undefined" && Array.isArray(LOCATION_DB)) {
+        const map = new Map(LOCATION_DB.map((s) => [s.id, s]));
+        imported.forEach((c) => map.set(c.id, c));
+        LOCATION_DB.length = 0;
+        LOCATION_DB.push(...map.values());
+      }
+
+      initSiteDatalists();
+
+      const importMsg = document.getElementById("importMsg");
+      if (importMsg) {
+        importMsg.textContent = `✓ ${imported.length} site berhasil diimpor!`;
+        setTimeout(() => { importMsg.textContent = ""; }, 4000);
+      }
+
+      alert(`Sukses! ${imported.length} data teknis site berhasil diimpor ke dalam form dan siap digunakan untuk auto-fill.`);
+    } catch (err) {
+      alert("Gagal memproses file: " + err.message);
+    }
+  };
+
+  if (isXlsx) {
+    reader.readAsArrayBuffer(file);
+  } else {
+    reader.readAsText(file);
+  }
+}
+
+// Helper parser CSV sederhana
+function parseCsvToObjects(text) {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split(",").map((h) => h.replace(/^["']|["']$/g, "").trim().toUpperCase());
+  const list = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((c) => c.replace(/^["']|["']$/g, "").trim());
+    const obj = {};
+    headers.forEach((h, idx) => {
+      obj[h] = cols[idx] !== undefined ? cols[idx] : "";
+    });
+    list.push(obj);
+  }
+  return list;
+}
 
 // Inisialisasi Datalist Pencarian Site
 function initSiteDatalists() {

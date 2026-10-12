@@ -397,6 +397,16 @@
     <button type="button" class="config-btn" style="background:var(--accent); color:#fff;" onclick="saveConfig()">Simpan URL</button>
     <span id="cfgMsg" style="font-size: .75rem; color: var(--green); font-weight: 700;"></span>
   </div>
+
+  <hr style="margin: 12px 0; border: none; border-top: 1px solid var(--border);">
+  <label>Database Data Teknis Site (Auto-Fill):</label>
+  <p style="font-size: .75rem; color: var(--muted); margin: 2px 0 8px;">Upload file Excel atau CSV untuk menambah/memperbarui daftar site:</p>
+  <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+    <input type="file" id="fileDataTeknis" accept=".xlsx,.xls,.csv" style="display:none;" onchange="importDataTeknisFile(event)">
+    <button type="button" class="config-btn" style="background:var(--navy); color:#fff;" onclick="document.getElementById('fileDataTeknis').click()">📥 Upload Excel / CSV</button>
+    <a href="Template_Data_Teknis_Pentakom.xlsx" download class="config-btn" style="text-decoration:none; display:inline-block; line-height: 24px;">📄 Unduh Template .xlsx</a>
+    <span id="importMsg" style="font-size: .75rem; color: var(--green); font-weight: 700;"></span>
+  </div>
 </div>
 
 <!-- APP HEADER -->
@@ -775,6 +785,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="locations.js"></script>
 <script src="app.js"></script>
 </body>
