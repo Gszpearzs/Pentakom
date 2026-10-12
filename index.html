@@ -773,8 +773,10 @@
       <div class="card">
         <div class="card-title">VI. Perangkat Terpasang (SN / MAC / ALIAS)</div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-          <p style="font-size: .75rem; color: var(--muted); margin: 0;">Catat nomor seri perangkat sebelum dan sesudah dilakukan maintenance.</p>
-          <button type="button" class="btn-subtle" onclick="copySnBeforeToAfter()" style="background: var(--light-blue); color: var(--navy); border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">📋 Salin Semua SN Sebelum ke Sesudah</button>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn-subtle" onclick="copySnBeforeToAfter()" style="background: var(--light-blue); color: var(--navy); border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">📋 Salin SN Sebelum ke Sesudah</button>
+            <button type="button" class="btn-subtle" onclick="clearAllSn()" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">🗑️ Kosongkan Semua SN</button>
+          </div>
         </div>
 
         <table class="inspection-table">

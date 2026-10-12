@@ -520,7 +520,10 @@ function handleSiteSelect(query, type) {
     if (match.sn) {
       const setSn = (id, val) => {
         const el = document.getElementById(id);
-        if (el && val) { el.value = val; snCount++; }
+        if (el) {
+          el.value = val || "";
+          if (val) snCount++;
+        }
       };
       setSn("sn_b_0", match.sn.ap1);
       setSn("sn_b_1", match.sn.ap2);
@@ -563,6 +566,18 @@ function copySnBeforeToAfter() {
   } else {
     alert("Kolom SN Sesudah sudah terisi atau kolom SN Sebelum masih kosong.");
   }
+}
+
+// Bersihkan / Kosongkan Semua Kolom SN Perangkat (Sebelum & Sesudah)
+function clearAllSn() {
+  if (!confirm("Apakah Anda yakin ingin mengosongkan seluruh nomor seri (SN) perangkat pada tabel ini?")) return;
+  SN_ITEMS.forEach((_, idx) => {
+    const elB = document.getElementById(`sn_b_${idx}`);
+    const elA = document.getElementById(`sn_a_${idx}`);
+    if (elB) elB.value = "";
+    if (elA) elA.value = "";
+  });
+  saveDraft();
 }
 
 // Tab Switcher
