@@ -1,8 +1,7 @@
 // BACKEND GOOGLE APPS SCRIPT - PENTAKOM CM-PM FORM
 // Deploy sebagai Web app: Execute as = Me, Who has access = Anyone
 
-// Nama folder di Google Drive tempat foto & tanda tangan disimpan
-var FOLDER_NAME = "Pentakom CM-PM Bukti Foto";
+var FOLDER_NAME = "Pentakom CM-PM Bukti & Laporan";
 
 function doPost(e) {
   try {
@@ -15,20 +14,30 @@ function doPost(e) {
       sheet = ss.insertSheet("Laporan CM-PM");
     }
 
-    // Buat header jika sheet masih kosong
+    // Siapkan header jika sheet masih kosong
     setupHeaderIfEmpty(sheet);
 
     // Cari atau buat folder di Google Drive
     var driveFolder = getOrCreateFolder(FOLDER_NAME);
 
-    // Simpan Foto Bukti ke Google Drive & dapatkan URL-nya
+    var ticketPrefix = data.ticketNo ? data.ticketNo : "PKM-" + new Date().getTime();
+
+    // 1. Simpan Berkas Dokumen Word (.docx) ke Google Drive jika ada
+    var urlDocx = "";
+    if (data.docxBase64) {
+      urlDocx = saveBase64ToDrive(
+        driveFolder,
+        data.docxBase64,
+        ticketPrefix + "_LAPORAN.docx",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      );
+    }
+
+    // 2. Simpan Foto-Foto Bukti ke Google Drive
     var urlPhotoBefore = "";
     var urlPhotoDuring = "";
     var urlPhotoAfter = "";
-    var urlSigTech = "";
-    var urlSigPic = "";
-
-    var ticketPrefix = data.ticketNo ? data.ticketNo : "PKM-" + new Date().getTime();
+    var urlPhotoPic = "";
 
     if (data.photoBefore) {
       urlPhotoBefore = saveBase64ToDrive(driveFolder, data.photoBefore, ticketPrefix + "_BEFORE.jpg", "image/jpeg");
@@ -39,14 +48,11 @@ function doPost(e) {
     if (data.photoAfter) {
       urlPhotoAfter = saveBase64ToDrive(driveFolder, data.photoAfter, ticketPrefix + "_AFTER.jpg", "image/jpeg");
     }
-    if (data.sigTech) {
-      urlSigTech = saveBase64ToDrive(driveFolder, data.sigTech, ticketPrefix + "_TTD_TEKNISI.png", "image/png");
-    }
-    if (data.sigPic) {
-      urlSigPic = saveBase64ToDrive(driveFolder, data.sigPic, ticketPrefix + "_TTD_PIC.png", "image/png");
+    if (data.photoPic) {
+      urlPhotoPic = saveBase64ToDrive(driveFolder, data.photoPic, ticketPrefix + "_BA_PIC.jpg", "image/jpeg");
     }
 
-    // Susun baris data untuk Google Sheets
+    // 3. Masukkan Baris Rekap ke Google Sheets
     var rowData = [
       new Date(),                     // Timestamp input
       data.ticketNo || "-",           // No. Tiket
@@ -67,23 +73,23 @@ function doPost(e) {
       data.cmRootCause || "-",        // Penyebab (CM)
       data.cmAction || "-",           // Solusi / Tindakan (CM)
       data.cmSparepart || "-",        // Sparepart (CM)
-      data.pmChecklist || "-",        // Checklist (PM)
-      data.pmNotes || "-",            // Catatan PM
+      data.pmChecklist || "-",        // Status Komponen (PM)
       data.workStatus || "-",         // Status Akhir
       data.recommendations || "-",    // Rekomendasi
-      urlPhotoBefore,                 // Link Foto Before
-      urlPhotoDuring,                 // Link Foto During
-      urlPhotoAfter,                  // Link Foto After
-      urlSigTech,                     // Link TTD Teknisi
-      urlSigPic                       // Link TTD PIC
+      urlDocx,                        // Link Berkas Word .docx (Drive)
+      urlPhotoBefore,                 // Link Foto Before (Drive)
+      urlPhotoDuring,                 // Link Foto During (Drive)
+      urlPhotoAfter,                  // Link Foto After (Drive)
+      urlPhotoPic                     // Link Foto BA/PIC (Drive)
     ];
 
     sheet.appendRow(rowData);
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Laporan berhasil disimpan ke Google Sheets dan Google Drive.",
-      ticketNo: data.ticketNo
+      message: "Laporan & berkas Word berhasil disimpan ke Google Drive dan Google Sheets.",
+      ticketNo: data.ticketNo,
+      docxUrl: urlDocx
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
@@ -94,7 +100,6 @@ function doPost(e) {
   }
 }
 
-// Menangani permintaan GET sederhana (untuk cek status server)
 function doGet(e) {
   return ContentService.createTextOutput(JSON.stringify({
     status: "online",
@@ -103,7 +108,6 @@ function doGet(e) {
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
-// Helper: Menyiapkan Header Tabel jika masih kosong
 function setupHeaderIfEmpty(sheet) {
   if (sheet.getLastRow() === 0) {
     var headers = [
@@ -112,44 +116,39 @@ function setupHeaderIfEmpty(sheet) {
       "Nama Site", "Alamat Site", "PIC Site", "Kontak PIC",
       "Tipe Perangkat", "Merk / Seri", "Serial Number",
       "Gejala Kerusakan (CM)", "Akar Masalah (CM)", "Tindakan Korektif (CM)", "Sparepart (CM)",
-      "Checklist PM (PM)", "Catatan PM (PM)", "Status Pekerjaan", "Rekomendasi",
+      "Status Pemeriksaan Komponen (PM)", "Status Pekerjaan", "Rekomendasi",
+      "Link File Word .docx (Drive)",
       "Link Foto Before (Drive)", "Link Foto During (Drive)", "Link Foto After (Drive)",
-      "Link TTD Teknisi (Drive)", "Link TTD PIC (Drive)"
+      "Link Foto BA/PIC (Drive)"
     ];
 
     sheet.appendRow(headers);
 
-    // Format styling header
     var headerRange = sheet.getRange(1, 1, 1, headers.length);
-    headerRange.setBackground("#1e3a8a");
+    headerRange.setBackground("#0f2942");
     headerRange.setFontColor("#ffffff");
     headerRange.setFontWeight("bold");
-    headerRange.setFontFamily("Plus Jakarta Sans");
     sheet.setFrozenRows(1);
   }
 }
 
-// Helper: Mencari atau membuat folder Google Drive
 function getOrCreateFolder(folderName) {
   var folders = DriveApp.getFoldersByName(folderName);
   if (folders.hasNext()) {
     return folders.next();
   } else {
     var newFolder = DriveApp.createFolder(folderName);
-    // Buka akses viewing agar file foto bisa diakses dengan link
     newFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     return newFolder;
   }
 }
 
-// Helper: Menyimpan Data Base64 ke Google Drive
 function saveBase64ToDrive(folder, base64Data, filename, mimeType) {
   try {
     var cleanBase64 = base64Data;
     if (base64Data.indexOf(",") > -1) {
       cleanBase64 = base64Data.split(",")[1];
     }
-
     var decoded = Utilities.base64Decode(cleanBase64);
     var blob = Utilities.newBlob(decoded, mimeType, filename);
     var file = folder.createFile(blob);
