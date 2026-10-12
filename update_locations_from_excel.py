@@ -303,15 +303,18 @@ def main():
             merged_map[site_id] = item_data
             added_count += 1
 
-    # Hapus pemilik PT Pentakom dari database
+    # Hapus data yang tidak memiliki pemilik site atau berpemilik PT Pentakom
     final_db = [
         item for item in merged_map.values()
-        if not (item.get('pemilik') and 'pentakom' in str(item.get('pemilik')).lower())
+        if item.get('pemilik')
+        and str(item.get('pemilik')).strip()
+        and str(item.get('pemilik')).strip().lower() != 'unknown'
+        and 'pentakom' not in str(item.get('pemilik')).lower()
     ]
     print(f"Hasil Penggabungan:")
     print(f" - Site diperbarui : {updated_count}")
     print(f" - Site baru       : {added_count}")
-    print(f" - Total Database  : {len(final_db)} site")
+    print(f" - Total Database (dengan Pemilik) : {len(final_db)} site")
 
     # Ringkasan per pemilik
     owner_stats = {}
