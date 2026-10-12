@@ -966,23 +966,70 @@ function escapeHtml(str) {
 }
 
 function buildBaktiPdfContainer() {
-  const siteOwner = document.getElementById("siteOwner")?.value || "-";
-  const siteId = document.getElementById("siteId")?.value || "-";
-  const siteName = document.getElementById("siteName")?.value || "-";
-  const siteAddress = document.getElementById("siteAddress")?.value || "-";
-  const province = document.getElementById("province")?.value || "-";
-  const kabupaten = document.getElementById("kabupaten")?.value || "-";
-  const desa = document.getElementById("desa")?.value || "-";
-  const latitude = document.getElementById("latitude")?.value || "-";
-  const longitude = document.getElementById("longitude")?.value || "-";
-  const picName = document.getElementById("picName")?.value || "-";
-  const picPhone = document.getElementById("picPhone")?.value || "-";
-  const techName = document.getElementById("techName")?.value || "-";
-  const workDate = document.getElementById("workDate")?.value || "-";
-  const timeArrival = document.getElementById("timeArrival")?.value || "-";
-  const timeDeparture = document.getElementById("timeDeparture")?.value || "-";
-  const kegiatanType = document.getElementById("kegiatanType")?.value || "-";
-  const issueNotes = document.getElementById("issueNotes")?.value || "Kondisi normal / Sesuai laporan.";
+  const siteIdRaw = (document.getElementById("siteId")?.value || "").trim();
+  const siteId = siteIdRaw || "SITE";
+
+  // Ambil referensi lokasi dari LOCATION_DB jika ada
+  let loc = null;
+  if (typeof LOCATION_DB !== "undefined" && Array.isArray(LOCATION_DB)) {
+    loc = LOCATION_DB.find(l => l.id.toLowerCase() === siteId.toLowerCase()) || null;
+  }
+
+  // 1. Pemilik Site
+  let siteOwner = (document.getElementById("siteOwner")?.value || "").trim();
+  if (!siteOwner || siteOwner === "ALL") {
+    if (loc && loc.pemilik) siteOwner = loc.pemilik;
+  }
+  if (!siteOwner || siteOwner === "ALL") siteOwner = "BAKTI / KEMKOMINFO";
+
+  // 2. Nama Site
+  let siteName = (document.getElementById("siteName")?.value || "").trim();
+  if (!siteName && loc && loc.nama) siteName = loc.nama;
+  siteName = siteName || "-";
+
+  // 3. Alamat Site
+  let siteAddress = (document.getElementById("siteAddress")?.value || "").trim();
+  if (!siteAddress && loc && loc.alamat) siteAddress = loc.alamat;
+  siteAddress = siteAddress || "-";
+
+  // 4. Wilayah
+  let province = (document.getElementById("province")?.value || "").trim();
+  if (!province && loc && loc.provinsi) province = loc.provinsi;
+  province = province || "-";
+
+  let kabupaten = (document.getElementById("kabupaten")?.value || "").trim();
+  if (!kabupaten && loc && loc.kabupaten) kabupaten = loc.kabupaten;
+  kabupaten = kabupaten || "-";
+
+  let desa = (document.getElementById("desa")?.value || "").trim();
+  if (!desa && loc && loc.desa) desa = loc.desa;
+  desa = desa || "-";
+
+  // 5. Koordinat
+  let latitude = (document.getElementById("latitude")?.value || "").trim();
+  if (!latitude && loc && loc.lat) latitude = loc.lat;
+  latitude = latitude || "-";
+
+  let longitude = (document.getElementById("longitude")?.value || "").trim();
+  if (!longitude && loc && loc.lon) longitude = loc.lon;
+  longitude = longitude || "-";
+
+  // 6. PIC Lokasi
+  let picName = (document.getElementById("picName")?.value || "").trim();
+  if (!picName && loc && loc.pic) picName = loc.pic;
+  picName = picName || "Penanggung Jawab Lokasi";
+
+  let picPhone = (document.getElementById("picPhone")?.value || "").trim();
+  if (!picPhone && loc && loc.picPhone) picPhone = loc.picPhone;
+  picPhone = picPhone || "-";
+
+  // 7. Teknisi & Waktu
+  const techName = (document.getElementById("techName")?.value || "").trim() || "Teknisi Maintenance";
+  const workDate = (document.getElementById("workDate")?.value || "").trim() || new Date().toISOString().slice(0, 10);
+  const timeArrival = (document.getElementById("timeArrival")?.value || "").trim() || "09:00";
+  const timeDeparture = (document.getElementById("timeDeparture")?.value || "").trim() || "17:00";
+  const kegiatanType = (document.getElementById("kegiatanType")?.value || "").trim() || "Preventive Maintenance (PM)";
+  const issueNotes = (document.getElementById("issueNotes")?.value || "").trim() || "Kondisi perangkat dan jaringan beroperasi normal saat kunjungan pemeliharaan.";
 
   // Parameter Power
   const upsB = document.getElementById("upsBefore") ? document.getElementById("upsBefore").value : "Tidak Ada";
@@ -1011,9 +1058,9 @@ function buildBaktiPdfContainer() {
   OUTDOOR_ITEMS.forEach((name, i) => {
     const st = outdoorState[i] || { before: "Berfungsi", after: "Berfungsi" };
     outRowsHtml += `<tr>
-      <td>${escapeHtml(name)}</td>
-      <td style="text-align: center;">${escapeHtml(st.before)}</td>
-      <td style="text-align: center;">${escapeHtml(st.after)}</td>
+      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1;">${escapeHtml(name)}</td>
+      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1; text-align: center;">${escapeHtml(st.before)}</td>
+      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1; text-align: center;">${escapeHtml(st.after)}</td>
     </tr>`;
   });
 
@@ -1022,22 +1069,29 @@ function buildBaktiPdfContainer() {
   INDOOR_ITEMS.forEach((name, i) => {
     const st = indoorState[i] || { before: "Berfungsi", after: "Berfungsi" };
     inRowsHtml += `<tr>
-      <td>${escapeHtml(name)}</td>
-      <td style="text-align: center;">${escapeHtml(st.before)}</td>
-      <td style="text-align: center;">${escapeHtml(st.after)}</td>
+      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1;">${escapeHtml(name)}</td>
+      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1; text-align: center;">${escapeHtml(st.before)}</td>
+      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1; text-align: center;">${escapeHtml(st.after)}</td>
     </tr>`;
   });
 
-  // Tabel SN Perangkat
+  // Tabel SN Perangkat (Prioritaskan input, fallback ke database loc.sn, fallback Sesudah = Sebelum)
   let snRowsHtml = "";
+  const snKeyMap = ["ap1", "ap2", "router", "modem", "antenna", "transiver", "rack", "stabilizer"];
   SN_ITEMS.forEach((name, i) => {
-    const snB = (document.getElementById(`sn_b_${i}`)?.value || "-").trim();
-    const snA = (document.getElementById(`sn_a_${i}`)?.value || "-").trim();
+    let snB = (document.getElementById(`sn_b_${i}`)?.value || "").trim();
+    if (!snB && loc && loc.sn) {
+      const key = snKeyMap[i];
+      if (key && loc.sn[key]) snB = loc.sn[key];
+    }
+    let snA = (document.getElementById(`sn_a_${i}`)?.value || "").trim();
+    if (!snA && snB) snA = snB;
+
     snRowsHtml += `<tr>
-      <td style="text-align: center;">${i + 1}</td>
-      <td><strong>${escapeHtml(name)}</strong></td>
-      <td>${escapeHtml(snB || "-")}</td>
-      <td>${escapeHtml(snA || "-")}</td>
+      <td style="text-align: center; padding: 4.5px 7px; border: 1px solid #cbd5e1;">${i + 1}</td>
+      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1;"><strong>${escapeHtml(name)}</strong></td>
+      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1;">${escapeHtml(snB || "-")}</td>
+      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1;">${escapeHtml(snA || "-")}</td>
     </tr>`;
   });
 
@@ -1057,11 +1111,11 @@ function buildBaktiPdfContainer() {
         : `<div class="pdf-photo-empty">[${escapeHtml(pair.right.label)}: Tidak Terlampir]</div>`;
 
       photoPairsHtml += `
-        <div class="pdf-photo-card">
-          <div class="pdf-photo-title">📍 ${escapeHtml(pair.title)}</div>
-          <div class="pdf-photo-grid">
-            <div class="pdf-photo-col">${leftContent}</div>
-            <div class="pdf-photo-col">${rightContent}</div>
+        <div class="pdf-photo-card" style="page-break-inside: avoid; break-inside: avoid; border: 1px solid #e2e8f0; background: #ffffff; border-radius: 4px; padding: 8px; margin-bottom: 12px;">
+          <div class="pdf-photo-title" style="font-weight: 700; font-size: 10px; color: #0f2942; margin-bottom: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 3px;">📍 ${escapeHtml(pair.title)}</div>
+          <div class="pdf-photo-grid" style="display: flex; gap: 10px;">
+            <div class="pdf-photo-col" style="flex: 1; text-align: center; width: 50%;">${leftContent}</div>
+            <div class="pdf-photo-col" style="flex: 1; text-align: center; width: 50%;">${rightContent}</div>
           </div>
         </div>
       `;
@@ -1072,14 +1126,17 @@ function buildBaktiPdfContainer() {
     photoPairsHtml = `<div style="padding: 10px; color: #64748b; font-style: italic;">Tidak ada foto dokumentasi yang dilampirkan.</div>`;
   }
 
+  // Buat kontainer dokumen di viewport normal (tanpa koordinat minus yang menyebabkan blank canvas)
   const container = document.createElement("div");
-  container.id = "baktiPdfContainer";
-  container.style.position = "fixed";
-  container.style.left = "-9999px";
-  container.style.top = "0";
+  container.id = "baktiPdfReportContent";
   container.style.width = "780px";
-  container.style.background = "#ffffff";
-  container.style.zIndex = "-999";
+  container.style.boxSizing = "border-box";
+  container.style.backgroundColor = "#ffffff";
+  container.style.color = "#1e293b";
+  container.style.padding = "20px 24px";
+  container.style.borderRadius = "4px";
+  container.style.boxShadow = "0 4px 20px rgba(0,0,0,0.15)";
+  container.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
   container.innerHTML = `
     <div class="pdf-report-root">
@@ -1090,9 +1147,8 @@ function buildBaktiPdfContainer() {
           background: #ffffff;
           color: #1e293b;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          font-size: 10.5px;
+          font-size: 10px;
           line-height: 1.4;
-          padding: 15px 20px;
         }
         .pdf-header {
           display: flex;
@@ -1103,14 +1159,14 @@ function buildBaktiPdfContainer() {
           margin-bottom: 12px;
         }
         .pdf-header-title {
-          font-size: 14.5px;
+          font-size: 14px;
           font-weight: 800;
           color: #0f2942;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
         .pdf-header-sub {
-          font-size: 9.5px;
+          font-size: 9px;
           color: #64748b;
           font-weight: 600;
           margin-top: 2px;
@@ -1127,7 +1183,7 @@ function buildBaktiPdfContainer() {
         .pdf-section-title {
           background: #0f2942;
           color: #ffffff;
-          font-size: 10.5px;
+          font-size: 10px;
           font-weight: 700;
           padding: 5px 8px;
           border-radius: 3px;
@@ -1172,35 +1228,9 @@ function buildBaktiPdfContainer() {
           border-radius: 3px;
           line-height: 1.45;
         }
-        .pdf-photo-card {
-          page-break-inside: avoid;
-          break-inside: avoid;
-          border: 1px solid #e2e8f0;
-          background: #ffffff;
-          border-radius: 4px;
-          padding: 8px;
-          margin-bottom: 12px;
-        }
-        .pdf-photo-title {
-          font-weight: 700;
-          font-size: 10px;
-          color: #0f2942;
-          margin-bottom: 6px;
-          border-bottom: 1px solid #f1f5f9;
-          padding-bottom: 3px;
-        }
-        .pdf-photo-grid {
-          display: flex;
-          gap: 10px;
-        }
-        .pdf-photo-col {
-          flex: 1;
-          text-align: center;
-          width: 50%;
-        }
         .pdf-photo-img {
           width: 100%;
-          max-height: 220px;
+          max-height: 200px;
           object-fit: contain;
           border: 1px solid #cbd5e1;
           border-radius: 3px;
@@ -1209,7 +1239,7 @@ function buildBaktiPdfContainer() {
           margin: 0 auto;
         }
         .pdf-photo-empty {
-          height: 120px;
+          height: 110px;
           border: 1px dashed #cbd5e1;
           background: #f8fafc;
           border-radius: 3px;
@@ -1245,7 +1275,7 @@ function buildBaktiPdfContainer() {
           color: #0f2942;
         }
         .pdf-sign-space {
-          height: 65px;
+          height: 60px;
         }
         .pdf-sign-name {
           font-weight: 700;
@@ -1269,15 +1299,15 @@ function buildBaktiPdfContainer() {
         <tbody>
           <tr>
             <td>Pemilik Site</td>
-            <td>${escapeHtml(siteOwner)}</td>
+            <td><strong>${escapeHtml(siteOwner)}</strong></td>
           </tr>
           <tr>
             <td>Site ID (Kode Lokasi)</td>
-            <td><strong>${escapeHtml(siteId)}</strong></td>
+            <td><strong style="color: #0f2942; font-size: 10.5px;">${escapeHtml(siteId)}</strong></td>
           </tr>
           <tr>
             <td>Nama Site (Nama Site/Lokasi)</td>
-            <td>${escapeHtml(siteName)}</td>
+            <td><strong>${escapeHtml(siteName)}</strong></td>
           </tr>
           <tr>
             <td>Alamat Site/Lokasi</td>
@@ -1495,14 +1525,14 @@ async function getPdfBlob(container, opt) {
   if (typeof worker.outputPdf === "function") {
     try {
       const b = await worker.outputPdf("blob");
-      if (b instanceof Blob) return b;
+      if (b instanceof Blob && b.size > 1000) return b;
     } catch (e) {}
   }
 
   if (typeof worker.output === "function") {
     try {
       const b = await worker.output("blob");
-      if (b instanceof Blob) return b;
+      if (b instanceof Blob && b.size > 1000) return b;
     } catch (e) {}
   }
 
@@ -1514,29 +1544,104 @@ async function getPdfBlob(container, opt) {
 async function generateBaktiPdf() {
   const log = document.getElementById("statusLog");
   log.classList.add("show");
-  log.textContent = "⏳ Sedang menyusun dokumen PDF Laporan BAKTI (.pdf)...";
+  log.textContent = "⏳ Memeriksa data dan menyusun dokumen PDF Laporan BAKTI...";
 
+  const siteId = (document.getElementById("siteId")?.value || "").trim();
+  if (!siteId) {
+    alert("Perhatian: Harap pilih atau ketik 'Site ID (Kode Lokasi)' di Halaman 1 terlebih dahulu!");
+    switchTab(0);
+    document.getElementById("siteId")?.focus();
+    log.textContent = "⚠️ Harap pilih Site ID terlebih dahulu.";
+    return;
+  }
+
+  const techName = (document.getElementById("techName")?.value || "").trim();
+  if (!techName) {
+    alert("Perhatian: Harap isi 'Petugas (Nama Teknisi)' di Halaman 1 terlebih dahulu!");
+    switchTab(0);
+    document.getElementById("techName")?.focus();
+    log.textContent = "⚠️ Harap isi Nama Teknisi terlebih dahulu.";
+    return;
+  }
+
+  let overlay = null;
   try {
     if (typeof html2pdf === "undefined") {
       throw new Error("Pustaka html2pdf belum siap dimuat.");
     }
+
     const { container, filename } = buildBaktiPdfContainer();
-    document.body.appendChild(container);
+
+    // Tampilkan overlay render agar elemen ter-render secara utuh di DOM viewport (posisi 0,0 positif)
+    overlay = document.createElement("div");
+    overlay.id = "pdfGenerationOverlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.backgroundColor = "rgba(15, 41, 66, 0.94)";
+    overlay.style.zIndex = "999999";
+    overlay.style.overflowY = "auto";
+    overlay.style.display = "flex";
+    overlay.style.flexDirection = "column";
+    overlay.style.alignItems = "center";
+    overlay.style.padding = "25px 10px";
+    overlay.style.boxSizing = "border-box";
+
+    const banner = document.createElement("div");
+    banner.style.color = "#ffffff";
+    banner.style.fontSize = "14px";
+    banner.style.fontWeight = "bold";
+    banner.style.marginBottom = "12px";
+    banner.style.textAlign = "center";
+    banner.innerHTML = "⏳ Sedang memproses dan mengunduh berkas PDF Laporan BAKTI... Mohon tunggu sebentar.";
+
+    overlay.appendChild(banner);
+    overlay.appendChild(container);
+    document.body.appendChild(overlay);
+
+    // Tunggu gambar selesai ter-decode
+    const imgElements = container.querySelectorAll("img");
+    await Promise.all(Array.from(imgElements).map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(res => {
+        img.onload = res;
+        img.onerror = res;
+      });
+    }));
+
+    // Beri jeda 200ms agar browser selesai painting
+    await new Promise(r => setTimeout(r, 200));
 
     const opt = {
       margin: [8, 8, 8, 8],
       filename: filename,
       image: { type: "jpeg", quality: 0.95 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 800
+      },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       pagebreak: { mode: ["avoid-all", "css", "legacy"] }
     };
 
     await html2pdf().set(opt).from(container).save();
-    document.body.removeChild(container);
+
+    if (overlay && overlay.parentNode) {
+      overlay.parentNode.removeChild(overlay);
+      overlay = null;
+    }
 
     log.textContent = `✔ Berkas PDF berhasil dibuat dan diunduh:\n📂 ${filename}`;
   } catch (err) {
+    if (overlay && overlay.parentNode) {
+      overlay.parentNode.removeChild(overlay);
+    }
     log.textContent = `❌ Gagal membuat PDF: ${err.message}`;
     console.error("PDF generation error:", err);
   }
@@ -1573,21 +1678,71 @@ async function submitBaktiCloud() {
   log.textContent = "⏳ [1/3] Menghasilkan dokumen PDF resmi...";
   btn.disabled = true;
 
+  let overlay = null;
   try {
     const { container, filename } = buildBaktiPdfContainer();
-    document.body.appendChild(container);
+
+    overlay = document.createElement("div");
+    overlay.id = "pdfGenerationOverlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.backgroundColor = "rgba(15, 41, 66, 0.94)";
+    overlay.style.zIndex = "999999";
+    overlay.style.overflowY = "auto";
+    overlay.style.display = "flex";
+    overlay.style.flexDirection = "column";
+    overlay.style.alignItems = "center";
+    overlay.style.padding = "25px 10px";
+    overlay.style.boxSizing = "border-box";
+
+    const banner = document.createElement("div");
+    banner.style.color = "#ffffff";
+    banner.style.fontSize = "14px";
+    banner.style.fontWeight = "bold";
+    banner.style.marginBottom = "12px";
+    banner.style.textAlign = "center";
+    banner.innerHTML = "⏳ [1/3] Menyiapkan dokumen PDF Laporan BAKTI...";
+
+    overlay.appendChild(banner);
+    overlay.appendChild(container);
+    document.body.appendChild(overlay);
+
+    const imgElements = container.querySelectorAll("img");
+    await Promise.all(Array.from(imgElements).map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(res => {
+        img.onload = res;
+        img.onerror = res;
+      });
+    }));
+
+    await new Promise(r => setTimeout(r, 200));
 
     const opt = {
       margin: [8, 8, 8, 8],
       filename: filename,
       image: { type: "jpeg", quality: 0.95 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 800
+      },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       pagebreak: { mode: ["avoid-all", "css", "legacy"] }
     };
 
     const pdfBlob = await getPdfBlob(container, opt);
-    document.body.removeChild(container);
+
+    if (overlay && overlay.parentNode) {
+      overlay.parentNode.removeChild(overlay);
+      overlay = null;
+    }
 
     log.textContent = "⏳ [2/3] Mengompres berkas dan menyiapkan payload...";
     const reader = new FileReader();
