@@ -773,10 +773,13 @@
       <div class="card">
         <div class="card-title">VI. Perangkat Terpasang (SN / MAC / ALIAS)</div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <button type="button" class="btn-subtle" onclick="copySnBeforeToAfter()" style="background: var(--light-blue); color: var(--navy); border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">📋 Salin SN Sebelum ke Sesudah</button>
             <button type="button" class="btn-subtle" onclick="clearAllSn()" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">🗑️ Kosongkan Semua SN</button>
-            <button type="button" class="btn-subtle" onclick="exportDataSnCsv()" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">📥 Unduh Data SN Terkini (.csv)</button>
+            <button type="button" class="btn-subtle" onclick="exportDataSnCsv()" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">📥 Unduh CSV (.csv)</button>
+            <button type="button" class="btn-subtle" onclick="exportDataSnXlsx()" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">📊 Unduh Excel (.xlsx)</button>
+            <a href="Data_SN_Perangkat.csv" download="Data_SN_Perangkat.csv" style="display: inline-flex; align-items: center; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; text-decoration: none;">💾 Link Master CSV</a>
+            <a href="Data_SN_Perangkat.xlsx" download="Data_SN_Perangkat.xlsx" style="display: inline-flex; align-items: center; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; text-decoration: none;">💾 Link Master Excel</a>
           </div>
         </div>
 
@@ -828,7 +831,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="locations.js"></script>
-<script src="app.js"></script>
+<script src="locations.js?v=20261012_2315"></script>
+<script src="app.js?v=20261012_2315"></script>
 </body>
 </html>

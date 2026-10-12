@@ -1490,38 +1490,155 @@ async function submitBaktiCloud() {
 
 // Ekspor Seluruh Data SN Perangkat Terkini ke CSV
 function exportDataSnCsv() {
-  if (typeof LOCATION_DB === "undefined" || !Array.isArray(LOCATION_DB)) {
-    alert("Database lokasi belum dimuat.");
-    return;
+  try {
+    if (typeof LOCATION_DB === "undefined" || !Array.isArray(LOCATION_DB)) {
+      alert("Database lokasi belum dimuat.");
+      return;
+    }
+
+    const headers = ["Site ID (Kode Lokasi)", "MODEM", "ROUTER", "AP Indoor", "AP Outdoor", "ANTENNA", "BUC", "RACK", "STABILIZER"];
+    const rows = [headers.join(";")];
+
+    // Sinkronkan juga input form aktif jika sedang diedit
+    const curSiteId = (document.getElementById("siteId")?.value || "").trim().toLowerCase();
+    const curSnA = {
+      modem: document.getElementById("sn_a_3")?.value?.trim(),
+      router: document.getElementById("sn_a_2")?.value?.trim(),
+      ap1: document.getElementById("sn_a_0")?.value?.trim(),
+      ap2: document.getElementById("sn_a_1")?.value?.trim(),
+      antenna: document.getElementById("sn_a_4")?.value?.trim(),
+      transiver: document.getElementById("sn_a_5")?.value?.trim(),
+      rack: document.getElementById("sn_a_6")?.value?.trim(),
+      stabilizer: document.getElementById("sn_a_7")?.value?.trim()
+    };
+
+    LOCATION_DB.forEach((loc) => {
+      const sn = { ...(loc.sn || {}) };
+      if (curSiteId && loc.id.toLowerCase() === curSiteId) {
+        if (curSnA.modem) sn.modem = curSnA.modem;
+        if (curSnA.router) sn.router = curSnA.router;
+        if (curSnA.ap1) sn.ap1 = curSnA.ap1;
+        if (curSnA.ap2) sn.ap2 = curSnA.ap2;
+        if (curSnA.antenna) sn.antenna = curSnA.antenna;
+        if (curSnA.transiver) sn.transiver = curSnA.transiver;
+        if (curSnA.rack) sn.rack = curSnA.rack;
+        if (curSnA.stabilizer) sn.stabilizer = curSnA.stabilizer;
+      }
+
+      const row = [
+        loc.id || "",
+        sn.modem || "",
+        sn.router || "",
+        sn.ap1 || "",
+        sn.ap2 || "",
+        sn.antenna || "",
+        sn.transiver || "",
+        sn.rack || "",
+        sn.stabilizer || ""
+      ];
+      rows.push(row.map((cell) => String(cell || "").replace(/;/g, ",")).join(";"));
+    });
+
+    const csvContent = rows.join("\r\n");
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const filename = `Data_SN_Perangkat_${dateStr}.csv`;
+
+    // Metode 1: Menggunakan SheetJS jika library tersedia
+    if (typeof XLSX !== "undefined") {
+      const aoa = rows.map((r) => r.split(";"));
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Data SN Perangkat");
+      XLSX.writeFile(wb, filename, { bookType: "csv", FS: ";" });
+      return;
+    }
+
+    // Metode 2: Standard Blob dengan delay revoke URL
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveOrOpenBlob(blob, filename);
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (document.body.contains(a)) document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 2000);
+
+  } catch (err) {
+    alert("Gagal mengunduh CSV: " + err.message);
+    console.error("exportDataSnCsv error:", err);
   }
-  const headers = ["Site ID (Kode Lokasi)", "MODEM", "ROUTER", "AP Indoor", "AP Outdoor", "ANTENNA", "BUC", "RACK", "STABILIZER"];
-  const rows = [headers.join(";")];
+}
 
-  LOCATION_DB.forEach((loc) => {
-    const sn = loc.sn || {};
-    const row = [
-      loc.id || "",
-      sn.modem || "",
-      sn.router || "",
-      sn.ap1 || "",
-      sn.ap2 || "",
-      sn.antenna || "",
-      sn.transiver || "",
-      sn.rack || "",
-      sn.stabilizer || ""
-    ];
-    rows.push(row.map((cell) => String(cell).replace(/;/g, ",")).join(";"));
-  });
+// Ekspor Seluruh Data SN Perangkat Terkini ke Excel (.xlsx)
+function exportDataSnXlsx() {
+  try {
+    if (typeof LOCATION_DB === "undefined" || !Array.isArray(LOCATION_DB)) {
+      alert("Database lokasi belum dimuat.");
+      return;
+    }
 
-  const csvContent = rows.join("\r\n");
-  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  a.href = url;
-  a.download = `Data_SN_Perangkat_${dateStr}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+    const headers = ["Site ID (Kode Lokasi)", "MODEM", "ROUTER", "AP Indoor", "AP Outdoor", "ANTENNA", "BUC", "RACK", "STABILIZER"];
+    const curSiteId = (document.getElementById("siteId")?.value || "").trim().toLowerCase();
+    const curSnA = {
+      modem: document.getElementById("sn_a_3")?.value?.trim(),
+      router: document.getElementById("sn_a_2")?.value?.trim(),
+      ap1: document.getElementById("sn_a_0")?.value?.trim(),
+      ap2: document.getElementById("sn_a_1")?.value?.trim(),
+      antenna: document.getElementById("sn_a_4")?.value?.trim(),
+      transiver: document.getElementById("sn_a_5")?.value?.trim(),
+      rack: document.getElementById("sn_a_6")?.value?.trim(),
+      stabilizer: document.getElementById("sn_a_7")?.value?.trim()
+    };
+
+    const dataRows = [headers];
+    LOCATION_DB.forEach((loc) => {
+      const sn = { ...(loc.sn || {}) };
+      if (curSiteId && loc.id.toLowerCase() === curSiteId) {
+        if (curSnA.modem) sn.modem = curSnA.modem;
+        if (curSnA.router) sn.router = curSnA.router;
+        if (curSnA.ap1) sn.ap1 = curSnA.ap1;
+        if (curSnA.ap2) sn.ap2 = curSnA.ap2;
+        if (curSnA.antenna) sn.antenna = curSnA.antenna;
+        if (curSnA.transiver) sn.transiver = curSnA.transiver;
+        if (curSnA.rack) sn.rack = curSnA.rack;
+        if (curSnA.stabilizer) sn.stabilizer = curSnA.stabilizer;
+      }
+
+      dataRows.push([
+        loc.id || "",
+        sn.modem || "",
+        sn.router || "",
+        sn.ap1 || "",
+        sn.ap2 || "",
+        sn.antenna || "",
+        sn.transiver || "",
+        sn.rack || "",
+        sn.stabilizer || ""
+      ]);
+    });
+
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const filename = `Data_SN_Perangkat_${dateStr}.xlsx`;
+
+    if (typeof XLSX !== "undefined") {
+      const ws = XLSX.utils.aoa_to_sheet(dataRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Data SN Perangkat");
+      XLSX.writeFile(wb, filename);
+    } else {
+      exportDataSnCsv();
+    }
+  } catch (err) {
+    alert("Gagal mengunduh Excel: " + err.message);
+    console.error("exportDataSnXlsx error:", err);
+  }
 }
