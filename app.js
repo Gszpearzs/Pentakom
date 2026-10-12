@@ -641,6 +641,14 @@ function setupAutoSave() {
 }
 
 function saveDraft() {
+  const snData = {};
+  SN_ITEMS.forEach((_, i) => {
+    const elB = document.getElementById(`sn_b_${i}`);
+    const elA = document.getElementById(`sn_a_${i}`);
+    if (elB) snData[`sn_b_${i}`] = elB.value;
+    if (elA) snData[`sn_a_${i}`] = elA.value;
+  });
+
   const draft = {
     siteOwner: document.getElementById("siteOwner").value,
     siteId: document.getElementById("siteId").value,
@@ -659,6 +667,28 @@ function saveDraft() {
     timeArrival: document.getElementById("timeArrival").value,
     timeDeparture: document.getElementById("timeDeparture").value,
     issueNotes: document.getElementById("issueNotes").value,
+    upsBefore: document.getElementById("upsBefore") ? document.getElementById("upsBefore").value : "",
+    upsAfter: document.getElementById("upsAfter") ? document.getElementById("upsAfter").value : "",
+    stabBefore: document.getElementById("stabBefore") ? document.getElementById("stabBefore").value : "",
+    stabAfter: document.getElementById("stabAfter") ? document.getElementById("stabAfter").value : "",
+    powerSourceBefore: document.getElementById("powerSourceBefore") ? document.getElementById("powerSourceBefore").value : "",
+    powerSourceAfter: document.getElementById("powerSourceAfter") ? document.getElementById("powerSourceAfter").value : "",
+    opDays: document.getElementById("opDays") ? document.getElementById("opDays").value : "",
+    opHours: document.getElementById("opHours") ? document.getElementById("opHours").value : "",
+    voltInput: document.getElementById("voltInput") ? document.getElementById("voltInput").value : "",
+    voltUps: document.getElementById("voltUps") ? document.getElementById("voltUps").value : "",
+    voltStab: document.getElementById("voltStab") ? document.getElementById("voltStab").value : "",
+    voltGround: document.getElementById("voltGround") ? document.getElementById("voltGround").value : "",
+    foTx: document.getElementById("foTx") ? document.getElementById("foTx").value : "",
+    foRx: document.getElementById("foRx") ? document.getElementById("foRx").value : "",
+    foTemp: document.getElementById("foTemp") ? document.getElementById("foTemp").value : "",
+    selular4g: document.getElementById("selular4g") ? document.getElementById("selular4g").value : "",
+    operator4g: document.getElementById("operator4g") ? document.getElementById("operator4g").value : "",
+    selular3g: document.getElementById("selular3g") ? document.getElementById("selular3g").value : "",
+    operator3g: document.getElementById("operator3g") ? document.getElementById("operator3g").value : "",
+    altRl: document.getElementById("altRl") ? document.getElementById("altRl").value : "",
+    altFo: document.getElementById("altFo") ? document.getElementById("altFo").value : "",
+    snData,
     outdoorState,
     indoorState
   };
@@ -670,23 +700,53 @@ function restoreDraft() {
     const raw = localStorage.getItem("bakti_report_draft");
     if (!raw) return;
     const d = JSON.parse(raw);
-    if (d.siteOwner) document.getElementById("siteOwner").value = d.siteOwner;
-    if (d.siteId) document.getElementById("siteId").value = d.siteId;
-    if (d.siteName) document.getElementById("siteName").value = d.siteName;
-    if (d.siteAddress) document.getElementById("siteAddress").value = d.siteAddress;
-    if (d.province) document.getElementById("province").value = d.province;
-    if (d.kabupaten) document.getElementById("kabupaten").value = d.kabupaten;
-    if (d.desa) document.getElementById("desa").value = d.desa;
-    if (d.latitude) document.getElementById("latitude").value = d.latitude;
-    if (d.longitude) document.getElementById("longitude").value = d.longitude;
-    if (d.kegiatanType) document.getElementById("kegiatanType").value = d.kegiatanType;
-    if (d.picName) document.getElementById("picName").value = d.picName;
-    if (d.picPhone) document.getElementById("picPhone").value = d.picPhone;
-    if (d.techName) document.getElementById("techName").value = d.techName;
-    if (d.workDate) document.getElementById("workDate").value = d.workDate;
-    if (d.timeArrival) document.getElementById("timeArrival").value = d.timeArrival;
-    if (d.timeDeparture) document.getElementById("timeDeparture").value = d.timeDeparture;
-    if (d.issueNotes) document.getElementById("issueNotes").value = d.issueNotes;
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== null) el.value = val;
+    };
+
+    setVal("siteOwner", d.siteOwner);
+    setVal("siteId", d.siteId);
+    setVal("siteName", d.siteName);
+    setVal("siteAddress", d.siteAddress);
+    setVal("province", d.province);
+    setVal("kabupaten", d.kabupaten);
+    setVal("desa", d.desa);
+    setVal("latitude", d.latitude);
+    setVal("longitude", d.longitude);
+    setVal("kegiatanType", d.kegiatanType);
+    setVal("picName", d.picName);
+    setVal("picPhone", d.picPhone);
+    setVal("techName", d.techName);
+    setVal("workDate", d.workDate);
+    setVal("timeArrival", d.timeArrival);
+    setVal("timeDeparture", d.timeDeparture);
+    setVal("issueNotes", d.issueNotes);
+    setVal("upsBefore", d.upsBefore);
+    setVal("upsAfter", d.upsAfter);
+    setVal("stabBefore", d.stabBefore);
+    setVal("stabAfter", d.stabAfter);
+    setVal("powerSourceBefore", d.powerSourceBefore);
+    setVal("powerSourceAfter", d.powerSourceAfter);
+    setVal("opDays", d.opDays);
+    setVal("opHours", d.opHours);
+    setVal("voltInput", d.voltInput);
+    setVal("voltUps", d.voltUps);
+    setVal("voltStab", d.voltStab);
+    setVal("voltGround", d.voltGround);
+    setVal("foTx", d.foTx);
+    setVal("foRx", d.foRx);
+    setVal("foTemp", d.foTemp);
+    setVal("selular4g", d.selular4g);
+    setVal("operator4g", d.operator4g);
+    setVal("selular3g", d.selular3g);
+    setVal("operator3g", d.operator3g);
+    setVal("altRl", d.altRl);
+    setVal("altFo", d.altFo);
+
+    if (d.snData) {
+      Object.keys(d.snData).forEach((k) => setVal(k, d.snData[k]));
+    }
   } catch (e) {}
 }
 
@@ -815,21 +875,130 @@ async function buildBaktiDocx() {
   });
   docSections.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: inRows }), new Paragraph({ text: "" }));
 
-  // BAGIAN IV & V: POWER & ALTERNATIF JARINGAN
+  // BAGIAN IV: STATUS POWER & V. ALTERNATIF JARINGAN
+  const upsB = document.getElementById("upsBefore") ? document.getElementById("upsBefore").value : "Tidak Ada";
+  const upsA = document.getElementById("upsAfter") ? document.getElementById("upsAfter").value : "Tidak Ada";
+  const stabB = document.getElementById("stabBefore") ? document.getElementById("stabBefore").value : "Ada";
+  const stabA = document.getElementById("stabAfter") ? document.getElementById("stabAfter").value : "Ada";
+  const pwrSrcB = document.getElementById("powerSourceBefore") ? document.getElementById("powerSourceBefore").value : "Listrik PLN";
+  const pwrSrcA = document.getElementById("powerSourceAfter") ? document.getElementById("powerSourceAfter").value : "Listrik PLN";
+  const opDays = document.getElementById("opDays") ? document.getElementById("opDays").value : "24 Jam";
+  const opHours = document.getElementById("opHours") ? document.getElementById("opHours").value : "00.00-24.00";
+  const vIn = document.getElementById("voltInput") ? document.getElementById("voltInput").value : "220 Volt";
+  const vUps = document.getElementById("voltUps") ? document.getElementById("voltUps").value : "-";
+  const vStab = document.getElementById("voltStab") ? document.getElementById("voltStab").value : "220 Volt";
+  const vGnd = document.getElementById("voltGround") ? document.getElementById("voltGround").value : "0.8 Volt";
+
   docSections.push(
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "IV. STATUS POWER & V. ALTERNATIF JARINGAN", bold: true, size: 20 })] }),
+    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "IV. STATUS POWER", bold: true, size: 20 })] }),
     new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
       rows: [
-        new TableRow({ children: [cellText("Fisik UPS", true), cellText(`${document.getElementById("upsBefore").value || "Baik"} (Sebelum) / ${document.getElementById("upsAfter").value || "Baik"} (Sesudah)`)] }),
-        new TableRow({ children: [cellText("Fisik Stabilizer", true), cellText(`${document.getElementById("stabBefore").value || "Baik"} (Sebelum) / ${document.getElementById("stabAfter").value || "Baik"} (Sesudah)`)] }),
-        new TableRow({ children: [cellText("Sumber Daya Listrik", true), cellText(document.getElementById("powerSourceBefore").value || "PLN")] }),
-        new TableRow({ children: [cellText("Waktu Operasional", true), cellText(`${document.getElementById("opDays").value || "24 Jam"} | ${document.getElementById("opHours").value || "00.00-24.00"}`)] }),
-        new TableRow({ children: [cellText("Tegangan Input / UPS / Stabilizer", true), cellText(`${document.getElementById("voltInput").value || "220V"} / ${document.getElementById("voltUps").value || "220V"} / ${document.getElementById("voltStab").value || "220V"}`)] }),
-        new TableRow({ children: [cellText("Tegangan Grounding", true), cellText(document.getElementById("voltGround").value || "< 1V")] }),
-        new TableRow({ children: [cellText("Jaringan Selular (4G)", true), cellText(`${document.getElementById("selular4g").value} - ${document.getElementById("operator4g").value || "-"}`)] }),
-        new TableRow({ children: [cellText("Jaringan Selular (3G / 2G)", true), cellText(`${document.getElementById("selular3g").value} - ${document.getElementById("operator3g").value || "-"}`)] }),
-        new TableRow({ children: [cellText("Radio Link / Fiber Optic", true), cellText(`RL: ${document.getElementById("altRl").value} | FO: ${document.getElementById("altFo").value}`)] })
+        new TableRow({
+          children: [
+            cellText("PARAMETER POWER", true),
+            cellText("SEBELUM", true, AlignmentType.CENTER),
+            cellText("SESUDAH", true, AlignmentType.CENTER)
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Fisik UPS", true),
+            cellText(upsB, false, AlignmentType.CENTER),
+            cellText(upsA, false, AlignmentType.CENTER)
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Fisik Stabilizer", true),
+            cellText(stabB, false, AlignmentType.CENTER),
+            cellText(stabA, false, AlignmentType.CENTER)
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Source Power", true),
+            cellText(pwrSrcB, false, AlignmentType.CENTER),
+            cellText(pwrSrcA, false, AlignmentType.CENTER)
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Waktu Operasional", true),
+            cellText(`Hari: ${opDays} | Jam: ${opHours}`, false, AlignmentType.CENTER),
+            cellText(`Hari: ${opDays} | Jam: ${opHours}`, false, AlignmentType.CENTER)
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Teg. Input Source Power", true),
+            cellText(vIn, false, AlignmentType.CENTER),
+            cellText(vIn, false, AlignmentType.CENTER)
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Teg. Output UPS", true),
+            cellText(vUps, false, AlignmentType.CENTER),
+            cellText(vUps, false, AlignmentType.CENTER)
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Teg. Output Stabilizer", true),
+            cellText(vStab, false, AlignmentType.CENTER),
+            cellText(vStab, false, AlignmentType.CENTER)
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Teg. Grounding Power Source", true),
+            cellText(vGnd, false, AlignmentType.CENTER),
+            cellText(vGnd, false, AlignmentType.CENTER)
+          ]
+        })
+      ]
+    }),
+    new Paragraph({ text: "" }),
+    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "V. ALTERNATIF JARINGAN YANG ADA DI LOKASI", bold: true, size: 20 })] }),
+    new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          children: [
+            cellText("JARINGAN ALTERNATIF", true),
+            cellText("STATUS", true, AlignmentType.CENTER),
+            cellText("NAMA OPERATOR", true)
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Selular (4G)", true),
+            cellText(document.getElementById("selular4g").value || "Tidak Ada", false, AlignmentType.CENTER),
+            cellText(document.getElementById("operator4g").value || "-")
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Selular (3G / 2G)", true),
+            cellText(document.getElementById("selular3g").value || "Tidak Ada", false, AlignmentType.CENTER),
+            cellText(document.getElementById("operator3g").value || "-")
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Radio Link (RL)", true),
+            cellText(document.getElementById("altRl").value || "Tidak Ada", false, AlignmentType.CENTER),
+            cellText("-")
+          ]
+        }),
+        new TableRow({
+          children: [
+            cellText("Fiber Optic (Sekitar / Terpasang)", true),
+            cellText(document.getElementById("altFo").value || "Tidak Ada", false, AlignmentType.CENTER),
+            cellText("-")
+          ]
+        })
       ]
     }),
     new Paragraph({ text: "" })

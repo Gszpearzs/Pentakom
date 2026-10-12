@@ -597,48 +597,82 @@
     <div class="section-panel" id="tab2">
       <div class="card">
         <div class="card-title">IV. Status Power</div>
+        <p style="font-size: .75rem; color: var(--muted); margin-bottom: 12px;">Pilih ketersediaan fisik perangkat daya (Ada / Tidak Ada) sebelum dan sesudah pemeliharaan.</p>
 
-        <div class="row2">
-          <div>
-            <label>Fisik UPS (Sebelum)</label>
-            <input type="text" id="upsBefore" placeholder="Baik / Normal / Rusak">
-          </div>
-          <div>
-            <label>Fisik UPS (Sesudah)</label>
-            <input type="text" id="upsAfter" placeholder="Baik / Normal">
-          </div>
-        </div>
-
-        <div class="row2">
-          <div>
-            <label>Fisik Stabilizer (Sebelum)</label>
-            <input type="text" id="stabBefore" placeholder="Baik / Normal">
-          </div>
-          <div>
-            <label>Fisik Stabilizer (Sesudah)</label>
-            <input type="text" id="stabAfter" placeholder="Baik / Normal">
-          </div>
-        </div>
+        <!-- Tabel Pilihan Fisik Ada / Tidak Ada Sesuai Format Halaman 3 BAKTI -->
+        <table class="inspection-table" style="margin-bottom: 14px;">
+          <thead>
+            <tr>
+              <th style="width: 40%;">Fisik Perangkat Power</th>
+              <th style="width: 30%;">SEBELUM</th>
+              <th style="width: 30%;">SESUDAH</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Fisik UPS</strong></td>
+              <td>
+                <select id="upsBefore">
+                  <option value="Ada">Ada</option>
+                  <option value="Tidak Ada" selected>Tidak Ada</option>
+                </select>
+              </td>
+              <td>
+                <select id="upsAfter">
+                  <option value="Ada">Ada</option>
+                  <option value="Tidak Ada" selected>Tidak Ada</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>2. Fisik Stabilizer</strong></td>
+              <td>
+                <select id="stabBefore">
+                  <option value="Ada" selected>Ada</option>
+                  <option value="Tidak Ada">Tidak Ada</option>
+                </select>
+              </td>
+              <td>
+                <select id="stabAfter">
+                  <option value="Ada" selected>Ada</option>
+                  <option value="Tidak Ada">Tidak Ada</option>
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
         <div class="row2">
           <div>
             <label>Source Power (Sebelum)</label>
-            <input type="text" id="powerSourceBefore" value="Listrik PLN" placeholder="Listrik PLN / Genset / PLTS / Solar Cell">
+            <select id="powerSourceBefore">
+              <option value="Listrik PLN" selected>Listrik PLN</option>
+              <option value="Genset">Genset</option>
+              <option value="PLTS">PLTS</option>
+              <option value="Solar Cell">Solar Cell</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
           </div>
           <div>
             <label>Source Power (Sesudah)</label>
-            <input type="text" id="powerSourceAfter" value="Listrik PLN" placeholder="Listrik PLN / Genset / PLTS / Solar Cell">
+            <select id="powerSourceAfter">
+              <option value="Listrik PLN" selected>Listrik PLN</option>
+              <option value="Genset">Genset</option>
+              <option value="PLTS">PLTS</option>
+              <option value="Solar Cell">Solar Cell</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
           </div>
         </div>
 
         <div class="row2">
           <div>
             <label>Waktu Operasional (Hari)</label>
-            <input type="text" id="opDays" placeholder="Senin s/d Minggu / 24 Jam">
+            <input type="text" id="opDays" placeholder="Senin s/d Minggu / 24 Jam" value="24 Jam">
           </div>
           <div>
             <label>Waktu Operasional (Jam)</label>
-            <input type="text" id="opHours" placeholder="00.00 s/d 24.00">
+            <input type="text" id="opHours" placeholder="00.00 s/d 24.00" value="00.00 s/d 24.00">
           </div>
         </div>
 
