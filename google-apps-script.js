@@ -1,7 +1,7 @@
-// BACKEND GOOGLE APPS SCRIPT - PENTAKOM CM-PM FORM
+// BACKEND GOOGLE APPS SCRIPT - LAPORAN PEMELIHARAAN BAKTI
 // Deploy sebagai Web app: Execute as = Me, Who has access = Anyone
 
-var FOLDER_NAME = "Pentakom CM-PM Bukti & Laporan";
+var FOLDER_NAME = "Laporan Pemeliharaan BAKTI";
 
 function doPost(e) {
   try {
@@ -9,87 +9,78 @@ function doPost(e) {
     var data = JSON.parse(rawContents);
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName("Laporan CM-PM");
+    var sheet = ss.getSheetByName("Rekap Laporan BAKTI");
     if (!sheet) {
-      sheet = ss.insertSheet("Laporan CM-PM");
+      sheet = ss.insertSheet("Rekap Laporan BAKTI");
     }
 
-    // Siapkan header jika sheet masih kosong
     setupHeaderIfEmpty(sheet);
 
-    // Cari atau buat folder di Google Drive
+    // Cari atau buat folder induk di Google Drive
     var driveFolder = getOrCreateFolder(FOLDER_NAME);
 
-    var ticketPrefix = data.ticketNo ? data.ticketNo : "PKM-" + new Date().getTime();
+    // Buat subfolder khusus per Site & Tanggal agar rapi
+    var sitePrefix = (data.siteId ? data.siteId : "SITE") + "_" + (data.workDate ? data.workDate.replace(/-/g, "") : "");
+    var subFolder = driveFolder.createFolder(sitePrefix);
+    subFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
-    // 1. Simpan Berkas Dokumen Word (.docx) ke Google Drive jika ada
+    // 1. Simpan Berkas Dokumen Word (.docx)
     var urlDocx = "";
     if (data.docxBase64) {
-      urlDocx = saveBase64ToDrive(
-        driveFolder,
+      urlDocx = saveBase64ToFolder(
+        subFolder,
         data.docxBase64,
-        ticketPrefix + "_LAPORAN.docx",
+        "LAPORAN_BAKTI_" + sitePrefix + ".docx",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       );
     }
 
-    // 2. Simpan Foto-Foto Bukti ke Google Drive
-    var urlPhotoBefore = "";
-    var urlPhotoDuring = "";
-    var urlPhotoAfter = "";
-    var urlPhotoPic = "";
-
-    if (data.photoBefore) {
-      urlPhotoBefore = saveBase64ToDrive(driveFolder, data.photoBefore, ticketPrefix + "_BEFORE.jpg", "image/jpeg");
-    }
-    if (data.photoDuring) {
-      urlPhotoDuring = saveBase64ToDrive(driveFolder, data.photoDuring, ticketPrefix + "_DURING.jpg", "image/jpeg");
-    }
-    if (data.photoAfter) {
-      urlPhotoAfter = saveBase64ToDrive(driveFolder, data.photoAfter, ticketPrefix + "_AFTER.jpg", "image/jpeg");
-    }
-    if (data.photoPic) {
-      urlPhotoPic = saveBase64ToDrive(driveFolder, data.photoPic, ticketPrefix + "_BA_PIC.jpg", "image/jpeg");
+    // 2. Simpan Foto-Foto jika ada
+    if (data.photos && typeof data.photos === "object") {
+      for (var photoKey in data.photos) {
+        if (data.photos[photoKey]) {
+          saveBase64ToFolder(
+            subFolder,
+            data.photos[photoKey],
+            photoKey + ".jpg",
+            "image/jpeg"
+          );
+        }
+      }
     }
 
-    // 3. Masukkan Baris Rekap ke Google Sheets
+    // 3. Tambah Baris Rekap ke Google Sheets
     var rowData = [
-      new Date(),                     // Timestamp input
-      data.ticketNo || "-",           // No. Tiket
-      data.workType || "-",           // Tipe (CM/PM)
-      data.workDate || "-",           // Waktu Pengerjaan
-      data.techRegion || "-",         // Wilayah
-      data.techName || "-",           // Nama Teknisi
-      data.techPhone || "-",          // No. WhatsApp
-      data.clientName || "-",         // Nama Klien
-      data.siteName || "-",           // Nama Site
-      data.siteAddress || "-",        // Alamat Site
-      data.picName || "-",            // PIC Klien
-      data.picContact || "-",         // Kontak PIC
-      data.deviceType || "-",         // Tipe Perangkat
-      data.deviceBrand || "-",        // Merk & Seri
-      data.deviceSerial || "-",       // Serial Number
-      data.cmIssue || "-",            // Gejala (CM)
-      data.cmRootCause || "-",        // Penyebab (CM)
-      data.cmAction || "-",           // Solusi / Tindakan (CM)
-      data.cmSparepart || "-",        // Sparepart (CM)
-      data.pmChecklist || "-",        // Status Komponen (PM)
-      data.workStatus || "-",         // Status Akhir
-      data.recommendations || "-",    // Rekomendasi
-      urlDocx,                        // Link Berkas Word .docx (Drive)
-      urlPhotoBefore,                 // Link Foto Before (Drive)
-      urlPhotoDuring,                 // Link Foto During (Drive)
-      urlPhotoAfter,                  // Link Foto After (Drive)
-      urlPhotoPic                     // Link Foto BA/PIC (Drive)
+      new Date(),
+      data.siteOwner || "-",
+      data.siteId || "-",
+      data.siteName || "-",
+      data.siteAddress || "-",
+      data.province || "-",
+      data.kabupaten || "-",
+      data.desa || "-",
+      data.latitude || "-",
+      data.longitude || "-",
+      data.picName || "-",
+      data.picPhone || "-",
+      data.techName || "-",
+      data.workDate || "-",
+      data.timeArrival || "-",
+      data.timeDeparture || "-",
+      data.kegiatanType || "-",
+      data.issueNotes || "-",
+      urlDocx,
+      subFolder.getUrl()
     ];
 
     sheet.appendRow(rowData);
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Laporan & berkas Word berhasil disimpan ke Google Drive dan Google Sheets.",
-      ticketNo: data.ticketNo,
-      docxUrl: urlDocx
+      message: "Laporan berhasil disimpan ke Google Drive dan Google Sheets.",
+      siteId: data.siteId,
+      docxUrl: urlDocx,
+      folderUrl: subFolder.getUrl()
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
@@ -103,7 +94,7 @@ function doPost(e) {
 function doGet(e) {
   return ContentService.createTextOutput(JSON.stringify({
     status: "online",
-    service: "Pentakom CM-PM API Service",
+    service: "BAKTI Maintenance Report API",
     timestamp: new Date()
   })).setMimeType(ContentService.MimeType.JSON);
 }
@@ -111,15 +102,11 @@ function doGet(e) {
 function setupHeaderIfEmpty(sheet) {
   if (sheet.getLastRow() === 0) {
     var headers = [
-      "Timestamp Input", "No Tiket", "Tipe Pekerjaan", "Waktu Pengerjaan",
-      "Wilayah", "Nama Teknisi", "No WA Teknisi", "Klien / Pelanggan",
-      "Nama Site", "Alamat Site", "PIC Site", "Kontak PIC",
-      "Tipe Perangkat", "Merk / Seri", "Serial Number",
-      "Gejala Kerusakan (CM)", "Akar Masalah (CM)", "Tindakan Korektif (CM)", "Sparepart (CM)",
-      "Status Pemeriksaan Komponen (PM)", "Status Pekerjaan", "Rekomendasi",
-      "Link File Word .docx (Drive)",
-      "Link Foto Before (Drive)", "Link Foto During (Drive)", "Link Foto After (Drive)",
-      "Link Foto BA/PIC (Drive)"
+      "Timestamp Input", "Pemilik Site", "Site ID", "Nama Site", "Alamat Site",
+      "Provinsi", "Kabupaten", "Kelurahan/Desa", "Latitude", "Longitude",
+      "Nama PIC", "No HP PIC", "Petugas / Teknisi", "Tanggal Kunjungan",
+      "Waktu Tiba", "Waktu Selesai", "Kegiatan (CM/PM)", "Ringkasan Gangguan/Kondisi",
+      "Link File Word (.docx)", "Link Folder Bukti & Foto (Drive)"
     ];
 
     sheet.appendRow(headers);
@@ -143,7 +130,7 @@ function getOrCreateFolder(folderName) {
   }
 }
 
-function saveBase64ToDrive(folder, base64Data, filename, mimeType) {
+function saveBase64ToFolder(folder, base64Data, filename, mimeType) {
   try {
     var cleanBase64 = base64Data;
     if (base64Data.indexOf(",") > -1) {

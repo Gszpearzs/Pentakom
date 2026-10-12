@@ -2,618 +2,769 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pentakom - Laporan Pemeliharaan Teknisi (CM & PM)</title>
-<!-- Library DOCX untuk generate file Word langsung di browser -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Laporan Pemeliharaan BAKTI (CM & PM)</title>
+<!-- Pustaka docx untuk generate Word resmi di browser -->
 <script src="https://unpkg.com/docx@8.5.0/build/index.iife.js"></script>
 <style>
   :root {
     --navy: #0f2942;
-    --navy-2: #153a5b;
+    --navy-dark: #091b2c;
     --accent: #2f6fed;
-    --accent-cm: #ea580c;
-    --accent-2: #1c9e6e;
+    --accent-bakti: #e53935;
+    --green: #10b981;
+    --red: #ef4444;
     --bg: #f4f6f9;
     --card: #ffffff;
-    --border: #e2e6ec;
+    --border: #d5dbe3;
     --text: #1b2430;
-    --muted: #6b7684;
-    --danger: #d64545;
-    --warn: #c9821a;
-    --radius: 12px;
+    --muted: #64748b;
+    --radius: 10px;
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
+    padding-bottom: 90px;
+    font-size: 14px;
+    line-height: 1.45;
   }
 
-  /* Top Auth/Config Bar */
+  /* Top Bar & Config */
   #authBar {
     position: sticky;
     top: 0;
-    z-index: 20;
+    z-index: 100;
     background: #fff;
     border-bottom: 1px solid var(--border);
-    padding: 10px 14px;
+    padding: 8px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
-  #authBar .status-text {
-    font-size: .82rem;
+  .brand-logo-text {
+    font-weight: 800;
+    font-size: 1.1rem;
     color: var(--navy);
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  .config-toggle {
-    font-size: .78rem;
-    color: var(--accent);
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+  .brand-bakti {
+    color: var(--accent-bakti);
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: .05em;
+  }
+  .config-btn {
+    background: #f1f5f9;
+    border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 4px 10px;
-    cursor: pointer;
+    padding: 5px 10px;
+    font-size: .78rem;
     font-weight: 600;
+    cursor: pointer;
+    color: var(--navy);
+  }
+  #configBox {
+    display: none;
+    background: #fff;
+    border-bottom: 2px solid var(--accent);
+    padding: 12px 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  #configBox.show { display: block; }
+
+  /* App Header */
+  header.app-header {
+    background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 100%);
+    color: #fff;
+    padding: 18px 14px 22px;
+    text-align: center;
+  }
+  header.app-header h1 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  header.app-header p {
+    font-size: 0.8rem;
+    opacity: 0.9;
+  }
+
+  /* Navigation Steps / Tabs */
+  .nav-tabs {
+    display: flex;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    position: sticky;
+    top: 45px;
+    z-index: 90;
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    flex: 1;
+    min-width: 110px;
+    text-align: center;
+    padding: 11px 8px;
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
     transition: all .2s;
   }
-  .config-toggle:hover { background: #dbeafe; }
-
-  #configWrap { margin-top: 10px; display: none; }
-  #configWrap.show { display: block; }
-  #configPanel {
-    background: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 8px rgba(15,41,66,.06);
+  .nav-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: #f8fafc;
   }
 
-  /* Header */
-  header.app {
-    background: linear-gradient(135deg, var(--navy), var(--navy-2));
-    color: #fff;
-    padding: 24px 16px 30px;
+  /* Main Container & Cards */
+  .container {
+    max-width: 900px;
+    margin: 14px auto 0;
+    padding: 0 12px;
   }
-  .header-brand {
-    display: inline-block;
-    background: rgba(255,255,255,0.15);
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: .06em;
-    margin-bottom: 6px;
-  }
-  header.app h1 { margin: 0 0 6px; font-size: 1.35rem; font-weight: 800; }
-  header.app p { margin: 0; font-size: .85rem; opacity: .9; max-width: 640px; }
+  .section-panel { display: none; }
+  .section-panel.active { display: block; animation: fadeIn .2s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* Container */
-  .wrap { max-width: 820px; margin: -18px auto 60px; padding: 0 12px; }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 18px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 4px rgba(15,41,66,.05);
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(15,41,66,.04);
   }
-  .card h2 { font-size: 1.02rem; margin: 0 0 4px; color: var(--navy); display: flex; align-items: center; }
-  .card .sub { color: var(--muted); font-size: .8rem; margin: 0 0 14px; }
-  .section-num {
-    display: inline-flex;
+  .card-title {
+    font-size: .95rem;
+    font-weight: 800;
+    color: var(--navy);
+    border-left: 4px solid var(--accent);
+    padding-left: 8px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #fff;
-    font-size: .7rem;
-    font-weight: 700;
-    margin-right: 8px;
-    flex-shrink: 0;
   }
-  .section-num.highlight-cm { background: var(--accent-cm); }
+  .quick-actions {
+    display: flex;
+    gap: 6px;
+  }
 
-  label { display: block; font-size: .82rem; font-weight: 600; color: var(--navy); margin: 10px 0 4px; }
-  label .opt { color: var(--muted); font-weight: 400; font-size: .75rem; }
-  input[type=text], input[type=date], input[type=time], input[type=datetime-local], input[type=tel], input[type=number], textarea, select {
-    width: 100%;
-    padding: 9px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: .9rem;
-    background: #fbfcfd;
-    color: var(--text);
-    font-family: inherit;
-    transition: border .2s, box-shadow .2s;
+  /* Form Elements */
+  label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #334155;
+    margin: 8px 0 3px;
   }
-  textarea { min-height: 72px; resize: vertical; }
-  input:focus, textarea:focus, select:focus {
+  label .sub-label {
+    font-weight: 400;
+    color: var(--muted);
+  }
+  input[type=text], input[type=tel], input[type=date], input[type=time], select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: .88rem;
+    font-family: inherit;
+    color: var(--text);
+    background: #fdfdfd;
+  }
+  input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(47,111,237,.15);
+    box-shadow: 0 0 0 2px rgba(47,111,237,.15);
     background: #fff;
   }
+  textarea { min-height: 60px; resize: vertical; }
 
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-  @media (max-width: 580px) {
-    .row2, .row3 { grid-template-columns: 1fr; }
-  }
-  .hint { font-size: .74rem; color: var(--muted); margin-top: 3px; }
-
-  /* Work Type Switcher */
-  .work-type-tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .work-type-btn {
-    flex: 1;
-    padding: 10px;
-    border: 2px solid var(--border);
-    border-radius: 9px;
-    background: #fff;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: .88rem;
-    color: var(--muted);
-    text-align: center;
-    transition: all .2s;
-  }
-  .work-type-btn.active-cm {
-    border-color: var(--accent-cm);
-    background: #fff7ed;
-    color: var(--accent-cm);
-  }
-  .work-type-btn.active-pm {
-    border-color: var(--accent-2);
-    background: #ecfdf5;
-    color: var(--accent-2);
+  .row4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 600px) {
+    .row2, .row3, .row4 { grid-template-columns: 1fr; }
   }
 
-  /* Compare Items (Status Kondisi Baik / Buruk) */
-  .compare-item {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 10px;
-    background: #fbfcfd;
-  }
-  .compare-item .ci-label {
-    font-weight: 700;
-    font-size: .88rem;
-    margin-bottom: 8px;
-    color: var(--navy);
-  }
-  .ci-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  @media (max-width: 520px) {
-    .ci-grid { grid-template-columns: 1fr; }
-  }
-  .ci-col {
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px;
-  }
-  .ci-col .ci-tag {
-    font-size: .7rem;
-    font-weight: 700;
-    letter-spacing: .04em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    display: block;
-  }
-  .toggle-group {
-    display: flex;
-    gap: 6px;
-  }
-  .toggle-btn {
-    flex: 1;
-    padding: 7px 4px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    background: #fff;
+  /* Table Style Inspection (Outdoor & Indoor) */
+  .inspection-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
     font-size: .82rem;
+  }
+  .inspection-table th {
+    background: var(--navy);
+    color: #fff;
+    padding: 8px 6px;
+    text-align: center;
+    font-weight: 700;
+    border: 1px solid #1e3a5f;
+  }
+  .inspection-table td {
+    border: 1px solid var(--border);
+    padding: 8px 6px;
+    vertical-align: middle;
+  }
+  .inspection-table tr:nth-child(even) { background: #fbfcfd; }
+  .item-name { font-weight: 700; color: var(--navy); }
+
+  /* Functionality Toggle Buttons (Berfungsi / Tidak Berfungsi) */
+  .toggle-btn-group {
+    display: flex;
+    gap: 4px;
+  }
+  .btn-fn {
+    flex: 1;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 4px;
+    padding: 6px 2px;
+    font-size: .72rem;
     font-weight: 700;
     color: var(--muted);
-    text-align: center;
     cursor: pointer;
+    text-align: center;
     transition: all .15s;
+    user-select: none;
   }
-  .toggle-btn.active-baik {
-    background: #e5f7ee;
-    border-color: var(--accent-2);
-    color: var(--accent-2);
+  .btn-fn.active-ok {
+    background: #e6f9ed;
+    border-color: var(--green);
+    color: #047857;
   }
-  .toggle-btn.active-buruk {
-    background: #fdeceb;
-    border-color: var(--danger);
-    color: var(--danger);
+  .btn-fn.active-bad {
+    background: #feecec;
+    border-color: var(--red);
+    color: #b91c1c;
   }
-  .extra-field { margin-top: 8px; }
-  .extra-field input { padding: 7px 8px; font-size: .82rem; }
 
-  /* Photo Grid */
-  .photo-grid {
+  /* Photo Pair Grid */
+  .photo-pair-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    margin-bottom: 14px;
   }
-  @media (max-width: 540px) {
-    .photo-grid { grid-template-columns: 1fr; }
+  @media (max-width: 580px) {
+    .photo-pair-grid { grid-template-columns: 1fr; }
   }
-  .photo-slot {
+  .photo-card {
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 8px;
     padding: 10px;
     background: #fbfcfd;
   }
-  .photo-slot .ps-label {
-    font-size: .8rem;
-    font-weight: 600;
-    margin-bottom: 8px;
-    min-height: 24px;
+  .photo-title {
+    font-size: .78rem;
+    font-weight: 700;
     color: var(--navy);
+    margin-bottom: 6px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
   }
-  .photo-preview {
+  .photo-box {
     width: 100%;
-    height: 140px;
-    border-radius: 8px;
-    background: #eef1f5 center/cover no-repeat;
+    aspect-ratio: 4 / 3;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    background: #eef2f6 center/cover no-repeat;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--muted);
-    font-size: .74rem;
-    margin-bottom: 8px;
-    overflow: hidden;
-    border: 1px dashed var(--border);
+    font-size: .75rem;
     cursor: pointer;
+    overflow: hidden;
+    position: relative;
   }
-  .photo-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  .photo-box img { width: 100%; height: 100%; object-fit: cover; }
   .photo-actions {
     display: flex;
     gap: 6px;
-    flex-wrap: wrap;
+    margin-top: 6px;
   }
-  .photo-actions label.upl {
-    flex: 1 1 40%;
-    min-width: 90px;
-    text-align: center;
+  .btn-choose {
+    flex: 1;
     background: var(--accent);
     color: #fff;
-    border-radius: 7px;
-    padding: 7px 4px;
-    font-size: .74rem;
-    font-weight: 600;
+    border: none;
+    border-radius: 5px;
+    padding: 6px;
+    font-size: .72rem;
+    font-weight: 700;
     cursor: pointer;
-    margin: 0;
+    text-align: center;
   }
-  .photo-actions .clear-btn {
+  .btn-del {
     background: #fff;
     border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 7px 10px;
-    font-size: .75rem;
     color: var(--muted);
+    border-radius: 5px;
+    padding: 6px 10px;
+    font-size: .72rem;
     cursor: pointer;
   }
-  .photo-slot input[type=file] { display: none; }
-  .photo-slot.filled { border-color: var(--accent-2); }
-
-  /* Buttons */
-  button { font-family: inherit; cursor: pointer; }
-  .btn {
-    border: none;
-    border-radius: 9px;
-    padding: 11px 18px;
-    font-size: .9rem;
-    font-weight: 700;
-    transition: all .2s;
-  }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #265ecb; }
-  .btn-outline { background: #fff; border: 1px solid var(--border); color: var(--navy); }
-  .btn-outline:hover { background: #f0f3f8; }
-  .btn-sm { padding: 6px 12px; font-size: .8rem; border-radius: 7px; }
-  .btn-block { width: 100%; }
-  .btn[disabled] { opacity: .5; cursor: not-allowed; }
-
-  /* Progress & Status Log */
-  #statusLog {
-    white-space: pre-wrap;
-    font-size: .78rem;
-    background: #0f1720;
-    color: #c9d6e3;
-    border-radius: 8px;
-    padding: 10px;
-    max-height: 160px;
-    overflow: auto;
-    display: none;
-    margin-top: 10px;
-  }
-  #statusLog.show { display: block; }
-  .progress-bar {
-    height: 6px;
-    background: #eef1f5;
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 8px 0 0;
-  }
-  .progress-bar > div {
-    height: 100%;
-    background: var(--accent);
-    width: 0%;
-    transition: width .2s;
-  }
+  .photo-card input[type=file] { display: none; }
+  .photo-card.filled { border-color: var(--green); }
 
   /* Sticky Footer Actions */
-  .footer-actions {
-    position: sticky;
+  .footer-bar {
+    position: fixed;
     bottom: 0;
-    background: linear-gradient(to top, var(--bg) 60%, transparent);
-    padding: 14px 0 8px;
-    z-index: 15;
-  }
-  .footer-actions .inner {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 12px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid var(--border);
+    padding: 10px 14px;
+    z-index: 100;
     display: flex;
-    gap: 8px;
-    box-shadow: 0 -3px 12px rgba(15,41,66,.08);
+    justify-content: center;
+    box-shadow: 0 -3px 12px rgba(0,0,0,0.06);
   }
+  .footer-inner {
+    max-width: 900px;
+    width: 100%;
+    display: flex;
+    gap: 10px;
+  }
+  .btn-action {
+    flex: 1;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: .88rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all .15s;
+  }
+  .btn-doc { background: #0f2942; color: #fff; }
+  .btn-doc:hover { background: #1a4168; }
+  .btn-submit { background: #16a34a; color: #fff; }
+  .btn-submit:hover { background: #15803d; }
+  .btn-action[disabled] { opacity: .5; cursor: not-allowed; }
 
-  .hidden { display: none !important; }
+  /* Log status */
+  #statusLog {
+    background: #0f172a;
+    color: #94a3b8;
+    font-family: monospace;
+    font-size: .78rem;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+    white-space: pre-wrap;
+    display: none;
+  }
+  #statusLog.show { display: block; }
 </style>
 </head>
 <body>
 
-<!-- Top Navigation & Config Bar -->
+<!-- TOP BAR -->
 <div id="authBar">
-  <span class="status-text">⚡ Pentakom Laporan Teknisi — Tanpa login, langsung isi, simpan & kirim.</span>
-  <button class="config-toggle" type="button" onclick="toggleConfig()">⚙️ Pengaturan</button>
+  <div class="brand-logo-text">
+    <span>LAPORAN PEMELIHARAAN</span>
+    <span class="brand-bakti">BAKTI</span>
+  </div>
+  <button type="button" class="config-btn" onclick="toggleConfig()">⚙️ Pengaturan</button>
 </div>
 
-<!-- Config Panel Dropdown -->
-<div class="wrap" id="configWrap">
-  <div id="configPanel">
-    <label>URL Apps Script Backend (Google Drive & Sheets):</label>
-    <input type="text" id="cfgAppsScriptUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
-    <p class="hint">URL otomatis tersimpan di HP/Laptop. Diperlukan untuk upload berkas ke Google Drive.</p>
-    <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
-      <button class="btn btn-outline btn-sm" type="button" onclick="saveConfig()">Simpan Pengaturan</button>
-      <span id="cfgSavedMsg" class="hint" style="color: var(--accent-2); font-weight: 700;"></span>
-    </div>
+<!-- CONFIG PANEL -->
+<div id="configBox">
+  <label>URL Google Apps Script Backend (Drive & Sheets):</label>
+  <input type="text" id="cfgGasUrl" placeholder="https://script.google.com/macros/s/.../exec">
+  <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+    <button type="button" class="config-btn" style="background:var(--accent); color:#fff;" onclick="saveConfig()">Simpan URL</button>
+    <span id="cfgMsg" style="font-size: .75rem; color: var(--green); font-weight: 700;"></span>
   </div>
 </div>
 
-<!-- Header -->
-<header class="app">
-  <div class="header-brand">PENTAKOM SERVICE MANAGEMENT</div>
-  <h1>📋 Laporan Pemeliharaan Teknisi</h1>
-  <p>Isi detail kunjungan site (CM / PM), periksa status unit, upload foto, dan laporan otomatis tersimpan ke Google Drive serta dapat diunduh dalam format <strong>Word (.docx)</strong>.</p>
+<!-- APP HEADER -->
+<header class="app-header">
+  <h1>LAPORAN PEMELIHARAAN BAKTI</h1>
+  <p>Formulir Checklist & Dokumentasi Maintenance Resmi (CM / PM) - Sesuai Standar BAKTI Kominfo</p>
 </header>
 
-<!-- Main Container -->
-<div class="wrap">
-  <form id="mainForm" onsubmit="return false;">
+<!-- NAVIGATION TABS -->
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab(0)">1. Data Site & Teknisi</div>
+  <div class="nav-tab" onclick="switchTab(1)">2. Outdoor & Indoor</div>
+  <div class="nav-tab" onclick="switchTab(2)">3. Power & Alternatif</div>
+  <div class="nav-tab" onclick="switchTab(3)">4. SN Perangkat</div>
+  <div class="nav-tab" onclick="switchTab(4)">5. Dokumentasi Foto</div>
+</div>
 
-    <!-- SECTION 1: TIPE PEKERJAAN & DETAIL KUNJUNGAN -->
-    <div class="card">
-      <h2><span class="section-num">1</span> Tipe Pekerjaan & Waktu Kunjungan</h2>
-      <p class="sub">Pilih jenis tindakan pemeliharaan yang dilaksanakan</p>
+<!-- FORM BODY -->
+<div class="container">
+  <form id="baktiForm" onsubmit="return false;">
 
-      <div class="work-type-tabs">
-        <div class="work-type-btn active-pm" id="btnTabPM" onclick="setWorkType('PM')">
-          📋 Preventive Maintenance (PM)
+    <!-- TAB 1: DATA SITE & TEKNISI -->
+    <div class="section-panel active" id="tab0">
+      <div class="card">
+        <div class="card-title">Informasi Header & Pemilik Site</div>
+        
+        <label>Pemilik Site</label>
+        <select id="siteOwner">
+          <option value="PT Transtel Universal">PT Transtel Universal</option>
+          <option value="PT Primacom Interbuana">PT Primacom Interbuana</option>
+          <option value="PT Dutakom Wibawa Putra">PT Dutakom Wibawa Putra</option>
+          <option value="PT Pentakom">PT Pentakom</option>
+        </select>
+
+        <div class="row2">
+          <div>
+            <label>Site ID (Kode Lokasi) <span style="color:var(--red)">*</span></label>
+            <input type="text" id="siteId" placeholder="Ketik Site ID atau pilih dari list..." oninput="searchSite(this.value)">
+          </div>
+          <div>
+            <label>Nama Site (Nama Lokasi) <span style="color:var(--red)">*</span></label>
+            <input type="text" id="siteName" placeholder="Contoh: SMPN 1 Suoh / Desa XYZ" oninput="searchSite(this.value)">
+          </div>
         </div>
-        <div class="work-type-btn" id="btnTabCM" onclick="setWorkType('CM')">
-          🛠️ Corrective Maintenance (CM)
+
+        <label>Alamat Lengkap Site/Lokasi</label>
+        <textarea id="siteAddress" rows="2" placeholder="Nama Jalan, Kampung, Dusun, RT/RW..."></textarea>
+
+        <div class="row3">
+          <div>
+            <label>Provinsi</label>
+            <input type="text" id="province" placeholder="Provinsi">
+          </div>
+          <div>
+            <label>Kabupaten / Kota</label>
+            <input type="text" id="kabupaten" placeholder="Kabupaten">
+          </div>
+          <div>
+            <label>Kelurahan / Desa</label>
+            <input type="text" id="desa" placeholder="Kelurahan/Desa">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Latitude (Desimal)</label>
+            <input type="text" id="latitude" placeholder="-5.123456">
+          </div>
+          <div>
+            <label>Longitude (Desimal)</label>
+            <input type="text" id="longitude" placeholder="104.123456">
+          </div>
+        </div>
+        <button type="button" class="config-btn" style="margin-top: 6px;" onclick="getGpsLocation()">📍 Ambil Titik GPS dari HP Saya</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Informasi Petugas & Waktu Kunjungan</div>
+
+        <div class="row2">
+          <div>
+            <label>Kegiatan CM / PM <span style="color:var(--red)">*</span></label>
+            <select id="kegiatanType">
+              <option value="PM">Preventive Maintenance (PM)</option>
+              <option value="CM">Corrective Maintenance (CM)</option>
+            </select>
+          </div>
+          <div>
+            <label>Jenis Layanan</label>
+            <input type="text" id="serviceType" value="On-Site" readonly>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Nama PIC Lokasi</label>
+            <input type="text" id="picName" placeholder="Nama PIC Site / Sekolah / Desa">
+          </div>
+          <div>
+            <label>No. HP PIC Lokasi</label>
+            <input type="tel" id="picPhone" placeholder="08xxxxxxxxxx">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Petugas (Nama Teknisi Maintenance) <span style="color:var(--red)">*</span></label>
+            <input type="text" id="techName" placeholder="Nama teknisi pelaksana">
+          </div>
+          <div>
+            <label>Tanggal Kedatangan <span style="color:var(--red)">*</span></label>
+            <input type="date" id="workDate">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Waktu Kedatangan (Tiba di Lokasi)</label>
+            <input type="time" id="timeArrival">
+          </div>
+          <div>
+            <label>Waktu Penyelesaian (Selesai Maintenance)</label>
+            <input type="time" id="timeDeparture">
+          </div>
         </div>
       </div>
-      <input type="hidden" id="workType" value="PM">
 
-      <div class="row3">
-        <div>
-          <label>No. Tiket / Referensi</label>
-          <input type="text" id="ticketNo" readonly>
+      <div class="card">
+        <div class="card-title">I. Penjelasan Ringkas Kondisi / Gangguan Saat Kedatangan</div>
+        <textarea id="issueNotes" rows="3" placeholder="Catat kondisi awal saat tiba di lokasi, alarm perangkat, status listrik, keluhan pengguna setempat..."></textarea>
+      </div>
+    </div>
+
+    <!-- TAB 2: STATUS OUTDOOR & INDOOR -->
+    <div class="section-panel" id="tab1">
+      <div class="card">
+        <div class="card-title">
+          <span>II. Status Outdoor (Fisik)</span>
+          <div class="quick-actions">
+            <button type="button" class="config-btn" onclick="setAllFn('outdoor', 'Berfungsi')">✔ Semua Berfungsi</button>
+          </div>
         </div>
-        <div>
-          <label>Tanggal Kunjungan</label>
-          <input type="date" id="workDate">
+        <p style="font-size: .75rem; color: var(--muted); margin-bottom: 8px;">Isi status kondisi sebelum dan sesudah maintenance.</p>
+
+        <table class="inspection-table">
+          <thead>
+            <tr>
+              <th style="width: 40%;">Item Perangkat</th>
+              <th style="width: 30%;">Sebelum</th>
+              <th style="width: 30%;">Sesudah</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyOutdoor">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>III. Status Indoor (Fisik)</span>
+          <div class="quick-actions">
+            <button type="button" class="config-btn" onclick="setAllFn('indoor', 'Berfungsi')">✔ Semua Berfungsi</button>
+          </div>
         </div>
-        <div>
-          <label>Waktu Pengerjaan</label>
-          <input type="time" id="workTime">
+        <p style="font-size: .75rem; color: var(--muted); margin-bottom: 8px;">Isi status kondisi sebelum dan sesudah maintenance.</p>
+
+        <table class="inspection-table">
+          <thead>
+            <tr>
+              <th style="width: 40%;">Item Perangkat</th>
+              <th style="width: 30%;">Sebelum</th>
+              <th style="width: 30%;">Sesudah</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyIndoor">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: POWER & ALTERNATIF JARINGAN -->
+    <div class="section-panel" id="tab2">
+      <div class="card">
+        <div class="card-title">IV. Status Power</div>
+
+        <div class="row2">
+          <div>
+            <label>Fisik UPS (Sebelum)</label>
+            <input type="text" id="upsBefore" placeholder="Baik / Normal / Rusak">
+          </div>
+          <div>
+            <label>Fisik UPS (Sesudah)</label>
+            <input type="text" id="upsAfter" placeholder="Baik / Normal">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Fisik Stabilizer (Sebelum)</label>
+            <input type="text" id="stabBefore" placeholder="Baik / Normal">
+          </div>
+          <div>
+            <label>Fisik Stabilizer (Sesudah)</label>
+            <input type="text" id="stabAfter" placeholder="Baik / Normal">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Source Power (Sebelum)</label>
+            <input type="text" id="powerSourceBefore" value="Listrik PLN" placeholder="Listrik PLN / Genset / PLTS / Solar Cell">
+          </div>
+          <div>
+            <label>Source Power (Sesudah)</label>
+            <input type="text" id="powerSourceAfter" value="Listrik PLN" placeholder="Listrik PLN / Genset / PLTS / Solar Cell">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Waktu Operasional (Hari)</label>
+            <input type="text" id="opDays" placeholder="Senin s/d Minggu / 24 Jam">
+          </div>
+          <div>
+            <label>Waktu Operasional (Jam)</label>
+            <input type="text" id="opHours" placeholder="00.00 s/d 24.00">
+          </div>
+        </div>
+
+        <div class="row4">
+          <div>
+            <label>Teg. Input Source</label>
+            <input type="text" id="voltInput" placeholder="220 Volt">
+          </div>
+          <div>
+            <label>Teg. Output UPS</label>
+            <input type="text" id="voltUps" placeholder="220 Volt">
+          </div>
+          <div>
+            <label>Teg. Output Stabilizer</label>
+            <input type="text" id="voltStab" placeholder="220 Volt">
+          </div>
+          <div>
+            <label>Teg. Grounding</label>
+            <input type="text" id="voltGround" placeholder="0.8 Volt">
+          </div>
         </div>
       </div>
 
-      <div class="row3">
-        <div>
-          <label>Nama Teknisi</label>
-          <input type="text" id="techName" placeholder="Nama teknisi bertugas">
+      <div class="card">
+        <div class="card-title">Parameter Fiber Optik (Khusus Link FO / Optional)</div>
+        <div class="row3">
+          <div>
+            <label>Tx Power (dBm)</label>
+            <input type="text" id="foTx" placeholder="-">
+          </div>
+          <div>
+            <label>Rx Power (dBm)</label>
+            <input type="text" id="foRx" placeholder="-">
+          </div>
+          <div>
+            <label>Temperature (°C)</label>
+            <input type="text" id="foTemp" placeholder="-">
+          </div>
         </div>
-        <div>
-          <label>No. HP / WhatsApp</label>
-          <input type="tel" id="techPhone" placeholder="081234567xxx">
+      </div>
+
+      <div class="card">
+        <div class="card-title">V. Alternatif Jaringan yang Ada di Lokasi</div>
+        <p style="font-size: .75rem; color: var(--muted); margin-bottom: 8px;">Cek jaringan seluler / alternatif lain yang terdeteksi di lokasi.</p>
+
+        <div class="row2">
+          <div>
+            <label>Selular (4G)</label>
+            <select id="selular4g">
+              <option value="Ada">Ada</option>
+              <option value="Tidak Ada">Tidak Ada</option>
+            </select>
+          </div>
+          <div>
+            <label>Nama Operator 4G</label>
+            <input type="text" id="operator4g" placeholder="Telkomsel / Indosat / XL">
+          </div>
         </div>
-        <div>
-          <label>Wilayah / Regional</label>
-          <select id="techRegion">
-            <option value="Jakarta & Sekitarnya">Jakarta & Sekitarnya</option>
-            <option value="Jawa Barat">Jawa Barat</option>
-            <option value="Jawa Tengah & DIY">Jawa Tengah & DIY</option>
-            <option value="Jawa Timur">Jawa Timur</option>
-            <option value="Sumatera Bagian Utara">Sumatera Bagian Utara</option>
-            <option value="Sumatera Bagian Selatan">Sumatera Bagian Selatan</option>
-            <option value="Kalimantan">Kalimantan</option>
-            <option value="Sulawesi">Sulawesi</option>
-            <option value="Bali & Nusa Tenggara">Bali & Nusa Tenggara</option>
-            <option value="Maluku & Papua">Maluku & Papua</option>
-          </select>
+
+        <div class="row2">
+          <div>
+            <label>Selular (3G / 2G)</label>
+            <select id="selular3g">
+              <option value="Ada">Ada</option>
+              <option value="Tidak Ada">Tidak Ada</option>
+            </select>
+          </div>
+          <div>
+            <label>Nama Operator 3G / 2G</label>
+            <input type="text" id="operator3g" placeholder="Telkomsel">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label>Radio Link (RL)</label>
+            <select id="altRl">
+              <option value="Tidak Ada">Tidak Ada</option>
+              <option value="Ada">Ada</option>
+            </select>
+          </div>
+          <div>
+            <label>Fiber Optic (Terpasang / Sekitar Lokasi)</label>
+            <select id="altFo">
+              <option value="Tidak Ada">Tidak Ada</option>
+              <option value="Ada">Ada</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 2: DATA KLIEN & SITE -->
-    <div class="card">
-      <h2><span class="section-num">2</span> Data Klien & Lokasi Site</h2>
-      <p class="sub">Informasi site pelanggan dan kontak penanggung jawab setempat</p>
+    <!-- TAB 4: PERANGKAT TERPASANG (SN) -->
+    <div class="section-panel" id="tab3">
+      <div class="card">
+        <div class="card-title">VI. Perangkat Terpasang (SN / MAC / ALIAS)</div>
+        <p style="font-size: .75rem; color: var(--muted); margin-bottom: 12px;">Catat nomor seri perangkat sebelum dan sesudah dilakukan maintenance.</p>
 
-      <div class="row2">
-        <div>
-          <label>Nama Pelanggan / Klien</label>
-          <input type="text" id="clientName" placeholder="Contoh: Bank BNI / PT ABC">
-        </div>
-        <div>
-          <label>Nama Site / Cabang</label>
-          <input type="text" id="siteName" placeholder="Contoh: Kantor Cabang Sudirman">
-        </div>
+        <table class="inspection-table">
+          <thead>
+            <tr>
+              <th style="width: 30%;">Perangkat</th>
+              <th style="width: 35%;">SN Sebelum</th>
+              <th style="width: 35%;">SN Sesudah</th>
+            </tr>
+          </thead>
+          <tbody id="tbodySn">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
       </div>
+    </div>
 
-      <div>
-        <label>Alamat Lengkap Site</label>
-        <textarea id="siteAddress" rows="2" placeholder="Jl. Jenderal Sudirman No. 12..."></textarea>
-      </div>
+    <!-- TAB 5: DOKUMENTASI FOTO & SPEEDTEST (STANDAR BAKTI) -->
+    <div class="section-panel" id="tab4">
+      <div class="card">
+        <div class="card-title">VII. Foto Sebelum & Sesudah CM/PM (Standar BAKTI)</div>
+        <p style="font-size: .75rem; color: var(--muted); margin-bottom: 14px;">Semua foto berpasangan (Sebelum & Sesudah), otomatis dikompres dan dimasukkan ke berkas Word resmi.</p>
 
-      <div class="row2">
-        <div>
-          <label>Nama PIC / Pendamping Site</label>
-          <input type="text" id="picName" placeholder="Pak Budi / PIC IT Cabang">
-        </div>
-        <div>
-          <label>No. Kontak PIC</label>
-          <input type="tel" id="picPhone" placeholder="081809xxxxxx">
+        <div id="photoPairsContainer">
+          <!-- Rendered by JS -->
         </div>
       </div>
     </div>
 
-    <!-- SECTION 3: DATA PERANGKAT & HARDWARE -->
-    <div class="card">
-      <h2><span class="section-num">3</span> Identitas Perangkat & Serial Number</h2>
-      <p class="sub">Perangkat yang diperiksa atau ditangani di lokasi</p>
-
-      <div class="row3">
-        <div>
-          <label>Jenis Perangkat</label>
-          <input type="text" id="deviceType" placeholder="Router / Switch / UPS / Server">
-        </div>
-        <div>
-          <label>Merk & Model / Seri</label>
-          <input type="text" id="deviceBrand" placeholder="Cisco 2960 / MikroTik CCR">
-        </div>
-        <div>
-          <label>Serial Number (S/N)</label>
-          <input type="text" id="deviceSerial" placeholder="SN-XXXX-YYYY">
-        </div>
-      </div>
-    </div>
-
-    <!-- SECTION 4A: PENANGANAN CM (TAMPIL JIKA CM) -->
-    <div class="card hidden" id="cardCM">
-      <h2><span class="section-num highlight-cm">4</span> Rincian Penanganan Kerusakan (CM)</h2>
-      <p class="sub">Keluhan kerusakan, analisa akar masalah, dan perbaikan yang dilaksanakan</p>
-
-      <div>
-        <label>Gejala Kerusakan / Keluhan Awal</label>
-        <textarea id="cmIssue" rows="2" placeholder="Uraikan kendala atau indikasi kerusakan yang dilaporkan..."></textarea>
-      </div>
-      <div>
-        <label>Analisis Penyebab (Root Cause)</label>
-        <textarea id="cmRootCause" rows="2" placeholder="Penyebab kerusakan (overheat, kabel putus, power supply drop)..."></textarea>
-      </div>
-      <div>
-        <label>Tindakan Perbaikan / Solusi</label>
-        <textarea id="cmAction" rows="3" placeholder="Langkah perbaikan yang dilakukan teknisi di lokasi..."></textarea>
-      </div>
-      <div>
-        <label>Penggantian Sparepart <span class="opt">(Bila ada)</span></label>
-        <input type="text" id="cmSparepart" placeholder="Contoh: Modul SFP 1G, Kabel Patchcord 3m (atau isi: Tidak Ada)">
-      </div>
-    </div>
-
-    <!-- SECTION 4B: STATUS PEMERIKSAAN PM (TAMPIL JIKA PM) -->
-    <div class="card" id="cardPM">
-      <h2><span class="section-num">4</span> Status Pemeriksaan Komponen (PM)</h2>
-      <p class="sub">Toggle status kondisi sebelum & sesudah perawatan (Baik / Buruk)</p>
-
-      <div id="compareItemsList">
-        <!-- Rendered dynamically by JS -->
-      </div>
-    </div>
-
-    <!-- SECTION 5: HASIL AKHIR & STATUS -->
-    <div class="card">
-      <h2><span class="section-num">5</span> Status Akhir Pekerjaan & Rekomendasi</h2>
-      <p class="sub">Kondisi saat teknisi meninggalkan site</p>
-
-      <div class="row2">
-        <div>
-          <label>Status Pekerjaan</label>
-          <select id="workStatus">
-            <option value="Selesai (Beroperasi Normal)">✅ Selesai (Beroperasi Normal)</option>
-            <option value="Pending Sparepart">⏳ Pending (Menunggu Sparepart)</option>
-            <option value="Dalam Pemantauan">👀 Selesai Sementara (Dalam Pemantauan)</option>
-            <option value="Perlu Eskalasi">⚠️ Perlu Eskalasi Lanjutan</option>
-          </select>
-        </div>
-        <div>
-          <label>Rekomendasi / Saran Lanjutan</label>
-          <input type="text" id="recommendations" placeholder="Contoh: Jadwalkan penggantian baterai UPS pada PM berikutnya">
-        </div>
-      </div>
-    </div>
-
-    <!-- SECTION 6: DOKUMENTASI FOTO -->
-    <div class="card">
-      <h2><span class="section-num">6</span> Dokumentasi Foto Pekerjaan</h2>
-      <p class="sub">Foto otomatis dikompres agar hemat kuota dan dimasukkan ke dokumen Word & Google Drive</p>
-
-      <div class="photo-grid" id="photoGrid">
-        <!-- Rendered dynamically by JS -->
-      </div>
-    </div>
-
-    <!-- PROGRESS & STATUS LOG -->
-    <div class="card" style="padding: 12px 16px;">
-      <div id="statusLog"></div>
-      <div class="progress-bar" id="progressWrap" style="display: none;">
-        <div id="progressBar"></div>
-      </div>
-    </div>
+    <!-- STATUS LOG & PROGRESS -->
+    <div id="statusLog"></div>
 
   </form>
 </div>
 
-<!-- Sticky Bottom Footer Actions -->
-<div class="footer-actions">
-  <div class="wrap" style="margin: 0 auto;">
-    <div class="inner">
-      <button class="btn btn-outline" type="button" style="flex: 1;" onclick="downloadLocalWord()">
-        💾 Simpan Word (.docx)
-      </button>
-      <button class="btn btn-primary btn-block" type="button" style="flex: 2;" id="submitBtn" onclick="submitReport()">
-        🚀 Selesai & Upload ke Drive
-      </button>
-    </div>
+<!-- STICKY ACTION FOOTER -->
+<div class="footer-bar">
+  <div class="footer-inner">
+    <button type="button" class="btn-action btn-doc" id="btnWord" onclick="generateBaktiWord()">
+      📄 Unduh Word (.docx)
+    </button>
+    <button type="button" class="btn-action btn-submit" id="btnUpload" onclick="submitBaktiCloud()">
+      🚀 Kirim ke Drive & Sheets
+    </button>
   </div>
 </div>
 

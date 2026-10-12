@@ -1,499 +1,670 @@
 /**
- * ==============================================================================
- * PENTAKOM CM-PM FORM - APPLICATION LOGIC
- * Struktur & Pola Terinspirasi dari brilliantnb/LAPORAN-KUNJUNGAN
- * Fitur:
- * - Toggle Kondisi Baik / Buruk (PM Inspection)
- * - Auto-Generate & Download Dokumen Word (.docx) langsung di browser
- * - Upload Data & Foto ke Google Drive & Sheets via Apps Script Backend
- * - Auto-Save Draf Lokal di HP / Laptop (Offline Safe)
- * ==============================================================================
+ * LAPORAN PEMELIHARAAN BAKTI - APLIKASI WEB TEKNISI
+ * Sesuai Format Resmi Dokumen BAKTI Kominfo
  */
 
-// 1. Komponen Standar untuk Pemeriksaan PM
-const PM_COMPONENTS = [
-  { id: "fisik", name: "Kebersihan Fisik & Rak Unit" },
-  { id: "kabel", name: "Kerapihan Kabel, Port & Konektor" },
-  { id: "power", name: "Tegangan Power Supply & Baterai UPS" },
-  { id: "suhu",  name: "Suhu Operasional & Sirkulasi Fan" },
-  { id: "link",  name: "Konektivitas Jaringan & Ping Test" },
-  { id: "backup", name: "Pencadangan (Backup) Konfigurasi" }
+// 1. DATA ITEM OUTDOOR & INDOOR
+const OUTDOOR_ITEMS = [
+  "Dish / Antenna VSAT(VSAT)",
+  "Radio CPE (RL)",
+  "Pedestal Dish/Tower Radio (VSAT & RL)",
+  "Antenna Line of Sight (LOS) (VSAT & RL)",
+  "Feed Horn (VSAT)",
+  "LNA/LNB (VSAT)",
+  "RF/BUC/ODU (VSAT)",
+  "Konektor (VSAT; RL & FO)",
+  "Kabel Grounding (VSAT & RL)",
+  "Kekencangan Baut Antena/Tower (VSAT & RL)",
+  "Perangkat Lain (VSAT; RL & FO)"
 ];
 
-// 2. Definisi Slot Foto Dokumentasi
-const PHOTO_SLOTS = [
-  { id: "before", label: "1. Foto Sebelum (Before)", req: true },
-  { id: "during", label: "2. Foto Pengerjaan (During)", req: false },
-  { id: "after",  label: "3. Foto Sesudah (After)",  req: true },
-  { id: "pic",    label: "4. Foto Berita Acara / PIC Site", req: false }
+const INDOOR_ITEMS = [
+  "Modem",
+  "Router",
+  "POE",
+  "Antenna Line of Sight (LOS) (VSAT & RL)",
+  "Access Point#1",
+  "Access Point#2",
+  "RF/BUC/ODU (VSAT)",
+  "Kabel Utp Modem - Router",
+  "Kabel Utp Router - Access Point#1",
+  "Konektor RJ 45",
+  "Konektor RG 6 /RG 11 /RG 8",
+  "Kabel Grounding",
+  "Label Perangkat",
+  "Stabilizer",
+  "Wallmount Rack",
+  "Perangkat lain"
 ];
 
-// State Penyimpanan Gambar
-const photoData = {
-  before: null,
-  during: null,
-  after: null,
-  pic: null
-};
+const SN_ITEMS = [
+  "AP Indoor",
+  "AP Outdoor",
+  "ROUTER",
+  "MODEM",
+  "ANTENNA",
+  "BUC",
+  "RACK",
+  "STABILIZER"
+];
 
-// State Pemeriksaan PM
-const pmState = {};
+// 2. PASANGAN FOTO DOKUMENTASI (SESUAI DOKUMEN RESMI BAKTI HALAMAN 5 - 10)
+const PHOTO_PAIRS = [
+  {
+    title: "Sumber Listrik & Plang Lokasi",
+    left:  { id: "p_power_src", label: "Sumber Listrik (PLN/Genset/PLTS/UPS)" },
+    right: { id: "p_tech_id",   label: "Foto teknisi di depan Info Nama Lokasi" }
+  },
+  {
+    title: "Modem",
+    left:  { id: "p_modem_b", label: "Foto Modem (sebelum)" },
+    right: { id: "p_modem_a", label: "Foto Modem (sesudah)" }
+  },
+  {
+    title: "Router",
+    left:  { id: "p_router_b", label: "Foto Router (sebelum)" },
+    right: { id: "p_router_a", label: "Foto Router (sesudah)" }
+  },
+  {
+    title: "Access Point #1",
+    left:  { id: "p_ap1_b", label: "Foto Access Point#1 (sebelum)" },
+    right: { id: "p_ap1_a", label: "Foto Access Point#1 (sesudah)" }
+  },
+  {
+    title: "Access Point #2",
+    left:  { id: "p_ap2_b", label: "Foto Access Point#2 (sebelum)" },
+    right: { id: "p_ap2_a", label: "Foto Access Point#2 (sesudah)" }
+  },
+  {
+    title: "Antenna (Tampak Seluruh ODU)",
+    left:  { id: "p_ant_odu_b", label: "Foto Antenna (sebelum)-> tampak seluruh ODU" },
+    right: { id: "p_ant_odu_a", label: "Foto Antenna (sesudah)-> tampak seluruh ODU" }
+  },
+  {
+    title: "Antenna (Posisi/Tampak LOS)",
+    left:  { id: "p_ant_los_b", label: "Foto Antenna (sebelum)-> Posisi/tampak LOS" },
+    right: { id: "p_ant_los_a", label: "Foto Antenna (sesudah)-> Posisi/tampak LOS" }
+  },
+  {
+    title: "Transceiver / BUC dan LNB",
+    left:  { id: "p_buc_b", label: "Foto Transceiver / BUC & LNB (sebelum)" },
+    right: { id: "p_buc_a", label: "Foto BUC dan LNB (sesudah)" }
+  },
+  {
+    title: "Stabilizer",
+    left:  { id: "p_stab_b", label: "Foto Stabilizer (sebelum)" },
+    right: { id: "p_stab_a", label: "Foto Stabilizer (sesudah)" }
+  },
+  {
+    title: "Wallmount Rack",
+    left:  { id: "p_rack_b", label: "Foto Wallmount Rack (sebelum)" },
+    right: { id: "p_rack_a", label: "Foto Wallmount Rack (sesudah)" }
+  },
+  {
+    title: "Kabel Grounding",
+    left:  { id: "p_ground_b", label: "Foto Grounding (sebelum)" },
+    right: { id: "p_ground_a", label: "Foto Grounding (sesudah)" }
+  },
+  {
+    title: "Label Perangkat",
+    left:  { id: "p_label_b", label: "Foto Label Perangkat (sebelum)" },
+    right: { id: "p_label_a", label: "Foto Label Perangkat (sesudah)" }
+  },
+  {
+    title: "Speedtest Server International - SSID NAMA LOKASI",
+    left:  { id: "p_spd_lokasi_b", label: "Capture Speedtest Nama Lokasi (sebelum)" },
+    right: { id: "p_spd_lokasi_a", label: "Capture Speedtest Nama Lokasi (sesudah)" }
+  },
+  {
+    title: "Speedtest Server International - SSID BAKTI AKSI",
+    left:  { id: "p_spd_bakti_b", label: "Capture Speedtest BAKTI AKSI (sebelum)" },
+    right: { id: "p_spd_bakti_a", label: "Capture Speedtest BAKTI AKSI (sesudah)" }
+  },
+  {
+    title: "Wifi Analyzer AP#1",
+    left:  { id: "p_wifi_ap1_b", label: "Foto Wifi Analyzer AP#1 (sebelum)" },
+    right: { id: "p_wifi_ap1_a", label: "Foto Wifi Analyzer AP#1 (sesudah)" }
+  },
+  {
+    title: "Wifi Analyzer AP#2 - BAKTI AKSI",
+    left:  { id: "p_wifi_ap2_b", label: "Foto Wifi Analyzer AP#2 (sebelum)" },
+    right: { id: "p_wifi_ap2_a", label: "Foto Wifi Analyzer AP#2 (sesudah)" }
+  },
+  {
+    title: "Dokumen Berita Acara (BA)",
+    left:  { id: "p_ba_scan", label: "Scan Berita Acara Maintenance" },
+    right: { id: "p_ba_doc",  label: "Dokumen Pendukung Lainnya" }
+  }
+];
 
-// Key LocalStorage
-const STORAGE_CFG_URL = "pentakom_apps_script_url";
-const STORAGE_DRAFT   = "pentakom_cmpm_draft";
+// State Storage
+const outdoorState = {};
+const indoorState = {};
+const photos = {};
 
-// Inisialisasi saat Halaman Dimuat
+// Inisialisasi
 document.addEventListener("DOMContentLoaded", () => {
-  initDefaults();
-  renderCompareItems();
-  renderPhotoGrid();
+  initDateDefaults();
+  renderInspectionTables();
+  renderSnTable();
+  renderPhotoPairs();
   loadConfig();
   restoreDraft();
   setupAutoSave();
 });
 
-// -------------------------------------------------------------
-// KONFIGURASI URL APPS SCRIPT
-// -------------------------------------------------------------
-function toggleConfig() {
-  const wrap = document.getElementById("configWrap");
-  wrap.classList.toggle("show");
+// Tab Switcher
+function switchTab(index) {
+  document.querySelectorAll(".nav-tab").forEach((tab, i) => {
+    tab.classList.toggle("active", i === index);
+  });
+  document.querySelectorAll(".section-panel").forEach((panel, i) => {
+    panel.classList.toggle("active", i === index);
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+// Config URL
+function toggleConfig() {
+  document.getElementById("configBox").classList.toggle("show");
+}
 function saveConfig() {
-  const url = document.getElementById("cfgAppsScriptUrl").value.trim();
-  localStorage.setItem(STORAGE_CFG_URL, url);
-  const msg = document.getElementById("cfgSavedMsg");
-  msg.textContent = "✔ Tersimpan!";
+  const url = document.getElementById("cfgGasUrl").value.trim();
+  localStorage.setItem("bakti_gas_url", url);
+  const msg = document.getElementById("cfgMsg");
+  msg.textContent = "✔ URL Tersimpan!";
   setTimeout(() => { msg.textContent = ""; }, 2500);
 }
-
 function loadConfig() {
-  const savedUrl = localStorage.getItem(STORAGE_CFG_URL) || "";
-  document.getElementById("cfgAppsScriptUrl").value = savedUrl;
+  document.getElementById("cfgGasUrl").value = localStorage.getItem("bakti_gas_url") || "";
 }
 
-// -------------------------------------------------------------
-// DEFAULT VALUE & TIKET
-// -------------------------------------------------------------
-function initDefaults() {
-  // Generate Nomor Tiket
-  const today = new Date();
-  const dStr = today.toISOString().slice(0, 10).replace(/-/g, "");
-  const rPart = Math.random().toString(36).substring(2, 6).toUpperCase();
-  document.getElementById("ticketNo").value = `PKM-${dStr}-${rPart}`;
-
-  // Default Tanggal & Waktu Hari Ini
-  document.getElementById("workDate").value = today.toISOString().slice(0, 10);
-  const hours = String(today.getHours()).padStart(2, '0');
-  const minutes = String(today.getMinutes()).padStart(2, '0');
-  document.getElementById("workTime").value = `${hours}:${minutes}`;
+// Tanggal Default
+function initDateDefaults() {
+  const now = new Date();
+  document.getElementById("workDate").value = now.toISOString().slice(0, 10);
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  document.getElementById("timeArrival").value = `${hh}:${mm}`;
 }
 
-// -------------------------------------------------------------
-// WORK TYPE SWITCHER (CM vs PM)
-// -------------------------------------------------------------
-function setWorkType(type) {
-  document.getElementById("workType").value = type;
-  const btnPM = document.getElementById("btnTabPM");
-  const btnCM = document.getElementById("btnTabCM");
-  const cardPM = document.getElementById("cardPM");
-  const cardCM = document.getElementById("cardCM");
-
-  if (type === "PM") {
-    btnPM.className = "work-type-btn active-pm";
-    btnCM.className = "work-type-btn";
-    cardPM.classList.remove("hidden");
-    cardCM.classList.add("hidden");
-  } else {
-    btnPM.className = "work-type-btn";
-    btnCM.className = "work-type-btn active-cm";
-    cardPM.classList.add("hidden");
-    cardCM.classList.remove("hidden");
+// GPS Auto Detect
+function getGpsLocation() {
+  if (!navigator.geolocation) {
+    alert("Perangkat Anda tidak mendukung fitur Geolocation.");
+    return;
   }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      document.getElementById("latitude").value = pos.coords.latitude.toFixed(6);
+      document.getElementById("longitude").value = pos.coords.longitude.toFixed(6);
+      alert(`✔ Koordinat berhasil diambil:\nLat: ${pos.coords.latitude.toFixed(6)}\nLon: ${pos.coords.longitude.toFixed(6)}`);
+      saveDraft();
+    },
+    (err) => {
+      alert("Gagal membaca GPS: " + err.message + ". Pastikan izin lokasi aktif.");
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
 }
 
-// -------------------------------------------------------------
-// RENDER STATUS INSPEKSI PM (TOGGLE BAIK / BURUK)
-// -------------------------------------------------------------
-function renderCompareItems() {
-  const container = document.getElementById("compareItemsList");
+// Render Tabel Outdoor & Indoor
+function renderInspectionTables() {
+  const tbOutdoor = document.getElementById("tbodyOutdoor");
+  tbOutdoor.innerHTML = "";
+  OUTDOOR_ITEMS.forEach((name, i) => {
+    outdoorState[i] = { before: "Berfungsi", after: "Berfungsi" };
+    tbOutdoor.appendChild(createInspectionRow("out", i, name, outdoorState[i]));
+  });
+
+  const tbIndoor = document.getElementById("tbodyIndoor");
+  tbIndoor.innerHTML = "";
+  INDOOR_ITEMS.forEach((name, i) => {
+    indoorState[i] = { before: "Berfungsi", after: "Berfungsi" };
+    tbIndoor.appendChild(createInspectionRow("in", i, name, indoorState[i]));
+  });
+}
+
+function createInspectionRow(prefix, idx, name, stateObj) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><div class="item-name">${name}</div></td>
+    <td>
+      <div class="toggle-btn-group">
+        <button type="button" class="btn-fn active-ok" id="btn_${prefix}_${idx}_b_ok" onclick="setFnState('${prefix}', ${idx}, 'before', 'Berfungsi')">Berfungsi</button>
+        <button type="button" class="btn-fn" id="btn_${prefix}_${idx}_b_bad" onclick="setFnState('${prefix}', ${idx}, 'before', 'Tidak Berfungsi')">Tidak</button>
+      </div>
+    </td>
+    <td>
+      <div class="toggle-btn-group">
+        <button type="button" class="btn-fn active-ok" id="btn_${prefix}_${idx}_a_ok" onclick="setFnState('${prefix}', ${idx}, 'after', 'Berfungsi')">Berfungsi</button>
+        <button type="button" class="btn-fn" id="btn_${prefix}_${idx}_a_bad" onclick="setFnState('${prefix}', ${idx}, 'after', 'Tidak Berfungsi')">Tidak</button>
+      </div>
+    </td>
+  `;
+  return tr;
+}
+
+function setFnState(prefix, idx, phase, status) {
+  const target = prefix === "out" ? outdoorState[idx] : indoorState[idx];
+  target[phase] = status;
+
+  const btnOk = document.getElementById(`btn_${prefix}_${idx}_${phase === 'before' ? 'b' : 'a'}_ok`);
+  const btnBad = document.getElementById(`btn_${prefix}_${idx}_${phase === 'before' ? 'b' : 'a'}_bad`);
+
+  if (status === "Berfungsi") {
+    btnOk.className = "btn-fn active-ok";
+    btnBad.className = "btn-fn";
+  } else {
+    btnOk.className = "btn-fn";
+    btnBad.className = "btn-fn active-bad";
+  }
+  saveDraft();
+}
+
+function setAllFn(group, status) {
+  const items = group === "outdoor" ? OUTDOOR_ITEMS : INDOOR_ITEMS;
+  const prefix = group === "outdoor" ? "out" : "in";
+  items.forEach((_, idx) => {
+    setFnState(prefix, idx, "before", status);
+    setFnState(prefix, idx, "after", status);
+  });
+}
+
+// Render SN Perangkat
+function renderSnTable() {
+  const tbody = document.getElementById("tbodySn");
+  tbody.innerHTML = "";
+  SN_ITEMS.forEach((snItem, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong>${idx + 1}. ${snItem}</strong></td>
+      <td><input type="text" id="sn_b_${idx}" placeholder="SN Sebelum..."></td>
+      <td><input type="text" id="sn_a_${idx}" placeholder="SN Sesudah..."></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Render Foto Berpasangan
+function renderPhotoPairs() {
+  const container = document.getElementById("photoPairsContainer");
   container.innerHTML = "";
 
-  PM_COMPONENTS.forEach((comp) => {
-    pmState[comp.id] = {
-      before: "Baik",
-      after: "Baik",
-      notes: ""
-    };
-
-    const item = document.createElement("div");
-    item.className = "compare-item";
-    item.innerHTML = `
-      <div class="ci-label">📌 ${comp.name}</div>
-      <div class="ci-grid">
-        <div class="ci-col">
-          <span class="ci-tag">Kondisi Awal (Sebelum)</span>
-          <div class="toggle-group">
-            <button type="button" class="toggle-btn active-baik" id="btn_${comp.id}_b_baik" onclick="setPmStatus('${comp.id}', 'before', 'Baik')">Baik</button>
-            <button type="button" class="toggle-btn" id="btn_${comp.id}_b_buruk" onclick="setPmStatus('${comp.id}', 'before', 'Buruk')">Buruk</button>
-          </div>
-        </div>
-        <div class="ci-col">
-          <span class="ci-tag">Kondisi Akhir (Sesudah)</span>
-          <div class="toggle-group">
-            <button type="button" class="toggle-btn active-baik" id="btn_${comp.id}_a_baik" onclick="setPmStatus('${comp.id}', 'after', 'Baik')">Baik</button>
-            <button type="button" class="toggle-btn" id="btn_${comp.id}_a_buruk" onclick="setPmStatus('${comp.id}', 'after', 'Buruk')">Buruk</button>
-          </div>
-        </div>
-      </div>
-      <div class="extra-field">
-        <input type="text" id="note_${comp.id}" placeholder="Catatan kondisi ${comp.name} (opsional)..." oninput="pmState['${comp.id}'].notes = this.value">
+  PHOTO_PAIRS.forEach((pair) => {
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.style.padding = "10px 12px";
+    wrap.style.marginBottom = "10px";
+    wrap.innerHTML = `
+      <div style="font-size:.82rem; font-weight:800; color:var(--navy); margin-bottom:8px;">📌 ${pair.title}</div>
+      <div class="photo-pair-grid">
+        ${renderPhotoBoxHtml(pair.left)}
+        ${renderPhotoBoxHtml(pair.right)}
       </div>
     `;
-    container.appendChild(item);
+    container.appendChild(wrap);
   });
 }
 
-function setPmStatus(compId, phase, status) {
-  pmState[compId][phase] = status;
-  const btnBaik = document.getElementById(`btn_${compId}_${phase === 'before' ? 'b' : 'a'}_baik`);
-  const btnBuruk = document.getElementById(`btn_${compId}_${phase === 'before' ? 'b' : 'a'}_buruk`);
-
-  if (status === "Baik") {
-    btnBaik.className = "toggle-btn active-baik";
-    btnBuruk.className = "toggle-btn";
-  } else {
-    btnBaik.className = "toggle-btn";
-    btnBuruk.className = "toggle-btn active-buruk";
-  }
-}
-
-// -------------------------------------------------------------
-// RENDER & KOMPRESI FOTO
-// -------------------------------------------------------------
-function renderPhotoGrid() {
-  const grid = document.getElementById("photoGrid");
-  grid.innerHTML = "";
-
-  PHOTO_SLOTS.forEach((slot) => {
-    const box = document.createElement("div");
-    box.className = "photo-slot";
-    box.id = `slot_${slot.id}`;
-    box.innerHTML = `
-      <div class="ps-label">${slot.label} ${slot.req ? '<span style="color:var(--danger)">*</span>' : ''}</div>
-      <div class="photo-preview" id="preview_${slot.id}" onclick="document.getElementById('input_${slot.id}').click()">
-        <span id="ph_${slot.id}">📷 Klik / Ambil Foto</span>
+function renderPhotoBoxHtml(p) {
+  return `
+    <div class="photo-card" id="card_${p.id}">
+      <div class="photo-title">${p.label}</div>
+      <div class="photo-box" id="box_${p.id}" onclick="document.getElementById('file_${p.id}').click()">
+        <span id="ph_${p.id}">📷 Klik / Pilih Foto</span>
       </div>
       <div class="photo-actions">
-        <label class="upl" for="input_${slot.id}">Pilih Foto</label>
-        <button type="button" class="clear-btn" onclick="clearPhoto('${slot.id}')">Hapus</button>
+        <label class="btn-choose" for="file_${p.id}">Pilih Foto</label>
+        <button type="button" class="btn-del" onclick="clearPhoto('${p.id}')">Hapus</button>
       </div>
-      <input type="file" id="input_${slot.id}" accept="image/*" capture="environment" onchange="handlePhotoUpload('${slot.id}', this)">
-    `;
-    grid.appendChild(box);
-  });
+      <input type="file" id="file_${p.id}" accept="image/*" capture="environment" onchange="uploadPhoto('${p.id}', this)">
+    </div>
+  `;
 }
 
-async function handlePhotoUpload(slotId, inputEl) {
+async function uploadPhoto(photoId, inputEl) {
   const file = inputEl.files[0];
   if (!file) return;
-
   try {
-    const compressedBase64 = await compressImage(file, 1200, 0.72);
-    photoData[slotId] = compressedBase64;
-
-    const preview = document.getElementById(`preview_${slotId}`);
-    preview.innerHTML = `<img src="${compressedBase64}" alt="${slotId}">`;
-    document.getElementById(`slot_${slotId}`).classList.add("filled");
+    const b64 = await compressImg(file, 1200, 0.72);
+    photos[photoId] = b64;
+    document.getElementById(`box_${photoId}`).innerHTML = `<img src="${b64}">`;
+    document.getElementById(`card_${photoId}`).classList.add("filled");
   } catch (err) {
-    alert("Gagal memproses gambar: " + err.message);
+    alert("Gagal memproses foto: " + err.message);
   }
 }
 
-function clearPhoto(slotId) {
-  photoData[slotId] = null;
-  const inputEl = document.getElementById(`input_${slotId}`);
+function clearPhoto(photoId) {
+  photos[photoId] = null;
+  const inputEl = document.getElementById(`file_${photoId}`);
   if (inputEl) inputEl.value = "";
-  const preview = document.getElementById(`preview_${slotId}`);
-  preview.innerHTML = `<span id="ph_${slotId}">📷 Klik / Ambil Foto</span>`;
-  document.getElementById(`slot_${slotId}`).classList.remove("filled");
+  document.getElementById(`box_${photoId}`).innerHTML = `<span id="ph_${photoId}">📷 Klik / Pilih Foto</span>`;
+  document.getElementById(`card_${photoId}`).classList.remove("filled");
 }
 
-function compressImage(file, maxDimension, quality) {
+function compressImg(file, maxDim, quality) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
+    const r = new FileReader();
+    r.onload = (e) => {
       const img = new Image();
       img.onload = () => {
         let { width, height } = img;
-        if (width > maxDimension || height > maxDimension) {
+        if (width > maxDim || height > maxDim) {
           if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
           } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
           }
         }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
+        const c = document.createElement("canvas");
+        c.width = width;
+        c.height = height;
+        const ctx = c.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
+        resolve(c.toDataURL("image/jpeg", quality));
       };
       img.onerror = () => reject(new Error("Format gambar tidak didukung"));
       img.src = e.target.result;
     };
-    reader.onerror = () => reject(new Error("Gagal membaca file gambar"));
-    reader.readAsDataURL(file);
+    r.onerror = () => reject(new Error("Gagal membaca file gambar"));
+    r.readAsDataURL(file);
   });
 }
 
-// -------------------------------------------------------------
-// AUTO-SAVE & DRAFT LOCALSTORAGE
-// -------------------------------------------------------------
+// Auto Save Local Draft
 function setupAutoSave() {
-  document.getElementById("mainForm").addEventListener("input", () => {
-    saveDraft();
-  });
+  document.getElementById("baktiForm").addEventListener("input", debounce(saveDraft, 600));
 }
 
 function saveDraft() {
   const draft = {
-    workType: document.getElementById("workType").value,
-    techName: document.getElementById("techName").value,
-    techPhone: document.getElementById("techPhone").value,
-    techRegion: document.getElementById("techRegion").value,
-    clientName: document.getElementById("clientName").value,
+    siteOwner: document.getElementById("siteOwner").value,
+    siteId: document.getElementById("siteId").value,
     siteName: document.getElementById("siteName").value,
     siteAddress: document.getElementById("siteAddress").value,
+    province: document.getElementById("province").value,
+    kabupaten: document.getElementById("kabupaten").value,
+    desa: document.getElementById("desa").value,
+    latitude: document.getElementById("latitude").value,
+    longitude: document.getElementById("longitude").value,
+    kegiatanType: document.getElementById("kegiatanType").value,
     picName: document.getElementById("picName").value,
     picPhone: document.getElementById("picPhone").value,
-    deviceType: document.getElementById("deviceType").value,
-    deviceBrand: document.getElementById("deviceBrand").value,
-    deviceSerial: document.getElementById("deviceSerial").value,
-    cmIssue: document.getElementById("cmIssue").value,
-    cmRootCause: document.getElementById("cmRootCause").value,
-    cmAction: document.getElementById("cmAction").value,
-    cmSparepart: document.getElementById("cmSparepart").value,
-    workStatus: document.getElementById("workStatus").value,
-    recommendations: document.getElementById("recommendations").value
+    techName: document.getElementById("techName").value,
+    workDate: document.getElementById("workDate").value,
+    timeArrival: document.getElementById("timeArrival").value,
+    timeDeparture: document.getElementById("timeDeparture").value,
+    issueNotes: document.getElementById("issueNotes").value,
+    outdoorState,
+    indoorState
   };
-  localStorage.setItem(STORAGE_DRAFT, JSON.stringify(draft));
+  localStorage.setItem("bakti_report_draft", JSON.stringify(draft));
 }
 
 function restoreDraft() {
   try {
-    const raw = localStorage.getItem(STORAGE_DRAFT);
+    const raw = localStorage.getItem("bakti_report_draft");
     if (!raw) return;
     const d = JSON.parse(raw);
-    if (d.workType) setWorkType(d.workType);
-    if (d.techName) document.getElementById("techName").value = d.techName;
-    if (d.techPhone) document.getElementById("techPhone").value = d.techPhone;
-    if (d.techRegion) document.getElementById("techRegion").value = d.techRegion;
-    if (d.clientName) document.getElementById("clientName").value = d.clientName;
+    if (d.siteOwner) document.getElementById("siteOwner").value = d.siteOwner;
+    if (d.siteId) document.getElementById("siteId").value = d.siteId;
     if (d.siteName) document.getElementById("siteName").value = d.siteName;
     if (d.siteAddress) document.getElementById("siteAddress").value = d.siteAddress;
+    if (d.province) document.getElementById("province").value = d.province;
+    if (d.kabupaten) document.getElementById("kabupaten").value = d.kabupaten;
+    if (d.desa) document.getElementById("desa").value = d.desa;
+    if (d.latitude) document.getElementById("latitude").value = d.latitude;
+    if (d.longitude) document.getElementById("longitude").value = d.longitude;
+    if (d.kegiatanType) document.getElementById("kegiatanType").value = d.kegiatanType;
     if (d.picName) document.getElementById("picName").value = d.picName;
     if (d.picPhone) document.getElementById("picPhone").value = d.picPhone;
-    if (d.deviceType) document.getElementById("deviceType").value = d.deviceType;
-    if (d.deviceBrand) document.getElementById("deviceBrand").value = d.deviceBrand;
-    if (d.deviceSerial) document.getElementById("deviceSerial").value = d.deviceSerial;
-    if (d.cmIssue) document.getElementById("cmIssue").value = d.cmIssue;
-    if (d.cmRootCause) document.getElementById("cmRootCause").value = d.cmRootCause;
-    if (d.cmAction) document.getElementById("cmAction").value = d.cmAction;
-    if (d.cmSparepart) document.getElementById("cmSparepart").value = d.cmSparepart;
-    if (d.workStatus) document.getElementById("workStatus").value = d.workStatus;
-    if (d.recommendations) document.getElementById("recommendations").value = d.recommendations;
-  } catch (e) {
-    console.warn("Gagal memulihkan draf:", e);
-  }
+    if (d.techName) document.getElementById("techName").value = d.techName;
+    if (d.workDate) document.getElementById("workDate").value = d.workDate;
+    if (d.timeArrival) document.getElementById("timeArrival").value = d.timeArrival;
+    if (d.timeDeparture) document.getElementById("timeDeparture").value = d.timeDeparture;
+    if (d.issueNotes) document.getElementById("issueNotes").value = d.issueNotes;
+  } catch (e) {}
 }
 
-// -------------------------------------------------------------
-// GENERATE & DOWNLOAD WORD (.DOCX) DI BROWSER (MENGGUNAKAN DOCX.JS)
-// -------------------------------------------------------------
-async function generateDocxBlob() {
+function debounce(fn, wait) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); };
+}
+
+// -----------------------------------------------------------------------------
+// GENERATE DOKUMEN WORD (.DOCX) - FORMAT 100% PERSIS DOKUMEN RESMI BAKTI
+// -----------------------------------------------------------------------------
+async function buildBaktiDocx() {
   if (typeof docx === "undefined") {
-    throw new Error("Library docx belum siap dimuat. Periksa koneksi internet.");
+    throw new Error("Pustaka docx belum siap dimuat.");
   }
+  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, ImageRun } = docx;
 
-  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, ImageRun, BorderStyle } = docx;
-
-  const ticketNo = document.getElementById("ticketNo").value;
-  const workType = document.getElementById("workType").value;
-  const workDate = document.getElementById("workDate").value;
-  const workTime = document.getElementById("workTime").value;
-  const techName = document.getElementById("techName").value || "-";
-  const techPhone = document.getElementById("techPhone").value || "-";
-  const techRegion = document.getElementById("techRegion").value || "-";
-  const clientName = document.getElementById("clientName").value || "-";
+  const siteOwner = document.getElementById("siteOwner").value;
+  const siteId = document.getElementById("siteId").value || "-";
   const siteName = document.getElementById("siteName").value || "-";
   const siteAddress = document.getElementById("siteAddress").value || "-";
+  const province = document.getElementById("province").value || "-";
+  const kabupaten = document.getElementById("kabupaten").value || "-";
+  const desa = document.getElementById("desa").value || "-";
+  const latitude = document.getElementById("latitude").value || "-";
+  const longitude = document.getElementById("longitude").value || "-";
   const picName = document.getElementById("picName").value || "-";
   const picPhone = document.getElementById("picPhone").value || "-";
-  const deviceType = document.getElementById("deviceType").value || "-";
-  const deviceBrand = document.getElementById("deviceBrand").value || "-";
-  const deviceSerial = document.getElementById("deviceSerial").value || "-";
-  const workStatus = document.getElementById("workStatus").value;
-  const recommendations = document.getElementById("recommendations").value || "-";
+  const techName = document.getElementById("techName").value || "-";
+  const workDate = document.getElementById("workDate").value || "-";
+  const timeArrival = document.getElementById("timeArrival").value || "-";
+  const timeDeparture = document.getElementById("timeDeparture").value || "-";
+  const kegiatanType = document.getElementById("kegiatanType").value;
+  const issueNotes = document.getElementById("issueNotes").value || "Kondisi normal / Sesuai laporan.";
 
-  // Helper Baris Tabel Metadata
-  function makeMetaRow(label1, val1, label2, val2) {
-    return new TableRow({
-      children: [
-        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: label1, bold: true })] })], width: { size: 22, type: WidthType.PERCENTAGE } }),
-        new TableCell({ children: [new Paragraph(val1)], width: { size: 28, type: WidthType.PERCENTAGE } }),
-        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: label2, bold: true })] })], width: { size: 22, type: WidthType.PERCENTAGE } }),
-        new TableCell({ children: [new Paragraph(val2)], width: { size: 28, type: WidthType.PERCENTAGE } })
-      ]
+  function cellText(txt, bold = false, align = AlignmentType.LEFT) {
+    return new TableCell({
+      children: [new Paragraph({ alignment: align, children: [new TextRun({ text: txt, bold, size: 18 })] })]
     });
   }
 
-  const docChildren = [
-    // Judul Dokumen
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [
-        new TextRun({ text: "PT. PENTAKOM TEKNOLOGI SERVIS", bold: true, size: 28, color: "0F2942" })
-      ]
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      children: [
-        new TextRun({ text: `BERITA ACARA & LAPORAN PEMELIHARAAN (${workType === 'CM' ? 'CORRECTIVE MAINTENANCE' : 'PREVENTIVE MAINTENANCE'})`, bold: true, size: 24, color: "2F6FED" })
+  const docSections = [];
+
+  // HALAMAN 1: HEADER & TABEL INFORMASI UMUM
+  docSections.push(
+    new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "LAPORAN PEMELIHARAAN", bold: true, size: 28 })] }),
+    new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: "BAKTI", bold: true, size: 26, color: "E53935" })] }),
+    new Paragraph({ text: "" }),
+    new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({ children: [cellText("Pemilik Site", true), cellText(siteOwner)] }),
+        new TableRow({ children: [cellText("Site ID (Kode Lokasi)", true), cellText(siteId)] }),
+        new TableRow({ children: [cellText("Nama Site (Nama Site/Lokasi)", true), cellText(siteName)] }),
+        new TableRow({ children: [cellText("Alamat Site/Lokasi", true), cellText(siteAddress)] }),
+        new TableRow({ children: [cellText("Provinsi", true), cellText(province)] }),
+        new TableRow({ children: [cellText("Kabupaten", true), cellText(kabupaten)] }),
+        new TableRow({ children: [cellText("Kelurahan/Desa", true), cellText(desa)] }),
+        new TableRow({ children: [cellText("Latitude / Longitude", true), cellText(`Lat: ${latitude} | Lon: ${longitude}`)] }),
+        new TableRow({ children: [cellText("Nama PIC Lokasi", true), cellText(picName)] }),
+        new TableRow({ children: [cellText("No HP PIC Lokasi", true), cellText(picPhone)] }),
+        new TableRow({ children: [cellText("Petugas (Nama Teknisi)", true), cellText(techName)] }),
+        new TableRow({ children: [cellText("Tanggal Kedatangan", true), cellText(workDate)] }),
+        new TableRow({ children: [cellText("Waktu Kedatangan & Selesai", true), cellText(`${timeArrival} s/d ${timeDeparture}`)] }),
+        new TableRow({ children: [cellText("Kegiatan CM/PM", true), cellText(kegiatanType)] }),
+        new TableRow({ children: [cellText("Jenis Layanan", true), cellText("On-Site")] })
       ]
     }),
     new Paragraph({ text: "" }),
+    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "I. PENJELASAN RINGKAS KONDISI / GANGGUAN PADA SAAT KEDATANGAN", bold: true, size: 20 })] }),
+    new Paragraph({ children: [new TextRun({ text: issueNotes, size: 18 })] }),
+    new Paragraph({ text: "" }),
 
-    // Tabel Informasi Umum
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "1. INFORMASI PELAKSANAAN & SITE", bold: true, size: 20 })] }),
-    new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
-      rows: [
-        makeMetaRow("No. Tiket / BA", ticketNo, "Tipe Pekerjaan", workType === "CM" ? "Corrective (CM)" : "Preventive (PM)"),
-        makeMetaRow("Tanggal Kunjungan", workDate, "Waktu Pengerjaan", workTime),
-        makeMetaRow("Nama Teknisi", techName, "No. Kontak Teknisi", techPhone),
-        makeMetaRow("Wilayah / Regional", techRegion, "Nama Pelanggan / Klien", clientName),
-        makeMetaRow("Nama Site / Cabang", siteName, "PIC Klien Setempat", `${picName} (${picPhone})`),
-        makeMetaRow("Perangkat Diperiksa", deviceType, "Merk & Model", deviceBrand),
-        makeMetaRow("Serial Number (S/N)", deviceSerial, "Alamat Site", siteAddress)
+    // BAGIAN II: STATUS OUTDOOR
+    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "II. STATUS OUTDOOR (SEBELUM & SESUDAH MAINTENANCE)", bold: true, size: 20 })] })
+  );
+
+  // Tabel Outdoor
+  const outRows = [
+    new TableRow({
+      children: [
+        cellText("ITEM FISIK OUTDOOR", true),
+        cellText("SEBELUM", true, AlignmentType.CENTER),
+        cellText("SESUDAH", true, AlignmentType.CENTER)
       ]
-    }),
-    new Paragraph({ text: "" })
+    })
   ];
-
-  // Bagian Detail Teknis
-  if (workType === "CM") {
-    const cmIssue = document.getElementById("cmIssue").value || "-";
-    const cmRootCause = document.getElementById("cmRootCause").value || "-";
-    const cmAction = document.getElementById("cmAction").value || "-";
-    const cmSparepart = document.getElementById("cmSparepart").value || "-";
-
-    docChildren.push(
-      new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "2. RINCIAN PERBAIKAN KERUSAKAN (CM)", bold: true, size: 20 })] }),
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        rows: [
-          new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Gejala Kerusakan Awal", bold: true })] })], width: { size: 30, type: WidthType.PERCENTAGE } }), new TableCell({ children: [new Paragraph(cmIssue)], width: { size: 70, type: WidthType.PERCENTAGE } })] }),
-          new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Analisis Akar Masalah", bold: true })] })] }), new TableCell({ children: [new Paragraph(cmRootCause)] })] }),
-          new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Tindakan Solusi / Perbaikan", bold: true })] })] }), new TableCell({ children: [new Paragraph(cmAction)] })] }),
-          new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Penggantian Sparepart", bold: true })] })] }), new TableCell({ children: [new Paragraph(cmSparepart)] })] })
-        ]
-      }),
-      new Paragraph({ text: "" })
-    );
-  } else {
-    // Tabel Status Pemeriksaan PM
-    const pmRows = [
+  OUTDOOR_ITEMS.forEach((name, i) => {
+    const st = outdoorState[i] || { before: "Berfungsi", after: "Berfungsi" };
+    outRows.push(
       new TableRow({
         children: [
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "No", bold: true })] })], width: { size: 8, type: WidthType.PERCENTAGE } }),
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Komponen / Item Pemeriksaan", bold: true })] })], width: { size: 38, type: WidthType.PERCENTAGE } }),
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Kondisi Awal", bold: true })] })], width: { size: 18, type: WidthType.PERCENTAGE } }),
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Kondisi Akhir", bold: true })] })], width: { size: 18, type: WidthType.PERCENTAGE } }),
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Catatan", bold: true })] })], width: { size: 18, type: WidthType.PERCENTAGE } })
+          cellText(name),
+          cellText(st.before, false, AlignmentType.CENTER),
+          cellText(st.after, false, AlignmentType.CENTER)
         ]
       })
-    ];
-
-    PM_COMPONENTS.forEach((comp, idx) => {
-      const state = pmState[comp.id] || { before: "Baik", after: "Baik", notes: "" };
-      pmRows.push(
-        new TableRow({
-          children: [
-            new TableCell({ children: [new Paragraph(String(idx + 1))] }),
-            new TableCell({ children: [new Paragraph(comp.name)] }),
-            new TableCell({ children: [new Paragraph(state.before)] }),
-            new TableCell({ children: [new Paragraph(state.after)] }),
-            new TableCell({ children: [new Paragraph(state.notes || "-")] })
-          ]
-        })
-      );
-    });
-
-    docChildren.push(
-      new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "2. STATUS PEMERIKSAAN RUTIN (PM)", bold: true, size: 20 })] }),
-      new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: pmRows }),
-      new Paragraph({ text: "" })
     );
-  }
+  });
+  docSections.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: outRows }), new Paragraph({ text: "" }));
 
-  // Bagian Hasil Akhir
-  docChildren.push(
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "3. HASIL AKHIR & REKOMENDASI", bold: true, size: 20 })] }),
+  // BAGIAN III: STATUS INDOOR
+  docSections.push(
+    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "III. STATUS INDOOR (SEBELUM & SESUDAH MAINTENANCE)", bold: true, size: 20 })] })
+  );
+  const inRows = [
+    new TableRow({
+      children: [
+        cellText("ITEM FISIK INDOOR", true),
+        cellText("SEBELUM", true, AlignmentType.CENTER),
+        cellText("SESUDAH", true, AlignmentType.CENTER)
+      ]
+    })
+  ];
+  INDOOR_ITEMS.forEach((name, i) => {
+    const st = indoorState[i] || { before: "Berfungsi", after: "Berfungsi" };
+    inRows.push(
+      new TableRow({
+        children: [
+          cellText(name),
+          cellText(st.before, false, AlignmentType.CENTER),
+          cellText(st.after, false, AlignmentType.CENTER)
+        ]
+      })
+    );
+  });
+  docSections.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: inRows }), new Paragraph({ text: "" }));
+
+  // BAGIAN IV & V: POWER & ALTERNATIF JARINGAN
+  docSections.push(
+    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "IV. STATUS POWER & V. ALTERNATIF JARINGAN", bold: true, size: 20 })] }),
     new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
       rows: [
-        new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Status Pekerjaan", bold: true })] })], width: { size: 30, type: WidthType.PERCENTAGE } }), new TableCell({ children: [new Paragraph(workStatus)], width: { size: 70, type: WidthType.PERCENTAGE } })] }),
-        new TableRow({ children: [new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Rekomendasi Tindak Lanjut", bold: true })] })] }), new TableCell({ children: [new Paragraph(recommendations)] })] })
+        new TableRow({ children: [cellText("Fisik UPS", true), cellText(`${document.getElementById("upsBefore").value || "Baik"} (Sebelum) / ${document.getElementById("upsAfter").value || "Baik"} (Sesudah)`)] }),
+        new TableRow({ children: [cellText("Fisik Stabilizer", true), cellText(`${document.getElementById("stabBefore").value || "Baik"} (Sebelum) / ${document.getElementById("stabAfter").value || "Baik"} (Sesudah)`)] }),
+        new TableRow({ children: [cellText("Sumber Daya Listrik", true), cellText(document.getElementById("powerSourceBefore").value || "PLN")] }),
+        new TableRow({ children: [cellText("Waktu Operasional", true), cellText(`${document.getElementById("opDays").value || "24 Jam"} | ${document.getElementById("opHours").value || "00.00-24.00"}`)] }),
+        new TableRow({ children: [cellText("Tegangan Input / UPS / Stabilizer", true), cellText(`${document.getElementById("voltInput").value || "220V"} / ${document.getElementById("voltUps").value || "220V"} / ${document.getElementById("voltStab").value || "220V"}`)] }),
+        new TableRow({ children: [cellText("Tegangan Grounding", true), cellText(document.getElementById("voltGround").value || "< 1V")] }),
+        new TableRow({ children: [cellText("Jaringan Selular (4G)", true), cellText(`${document.getElementById("selular4g").value} - ${document.getElementById("operator4g").value || "-"}`)] }),
+        new TableRow({ children: [cellText("Jaringan Selular (3G / 2G)", true), cellText(`${document.getElementById("selular3g").value} - ${document.getElementById("operator3g").value || "-"}`)] }),
+        new TableRow({ children: [cellText("Radio Link / Fiber Optic", true), cellText(`RL: ${document.getElementById("altRl").value} | FO: ${document.getElementById("altFo").value}`)] })
       ]
     }),
     new Paragraph({ text: "" })
   );
 
-  // Bagian Foto Bukti (Jika Ada)
-  docChildren.push(
-    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "4. DOKUMENTASI FOTO PEKERJAAN", bold: true, size: 20 })] })
+  // BAGIAN VI: PERANGKAT TERPASANG (SN)
+  docSections.push(
+    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "VI. PERANGKAT TERPASANG (SN / MAC / ALIAS)", bold: true, size: 20 })] })
+  );
+  const snRows = [
+    new TableRow({
+      children: [
+        cellText("NO", true, AlignmentType.CENTER),
+        cellText("PERANGKAT", true),
+        cellText("SN SEBELUM", true),
+        cellText("SN SESUDAH", true)
+      ]
+    })
+  ];
+  SN_ITEMS.forEach((name, i) => {
+    const snB = document.getElementById(`sn_b_${i}`).value || "-";
+    const snA = document.getElementById(`sn_a_${i}`).value || "-";
+    snRows.push(
+      new TableRow({
+        children: [
+          cellText(String(i + 1), false, AlignmentType.CENTER),
+          cellText(name, true),
+          cellText(snB),
+          cellText(snA)
+        ]
+      })
+    );
+  });
+  docSections.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: snRows }), new Paragraph({ text: "" }));
+
+  // BAGIAN VII: FOTO DOKUMENTASI LENGKAP
+  docSections.push(
+    new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "VII. DOKUMENTASI FOTO SEBELUM & SESUDAH CM/PM", bold: true, size: 20 })] })
   );
 
-  for (const slot of PHOTO_SLOTS) {
-    if (photoData[slot.id]) {
-      const base64Clean = photoData[slot.id].replace(/^data:image\/\w+;base64,/, "");
-      const binaryString = atob(base64Clean);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+  for (const pair of PHOTO_PAIRS) {
+    const leftB64 = photos[pair.left.id];
+    const rightB64 = photos[pair.right.id];
+
+    if (leftB64 || rightB64) {
+      docSections.push(
+        new Paragraph({ children: [new TextRun({ text: `> ${pair.title}`, bold: true, size: 19 })] })
+      );
+
+      const photoCells = [];
+
+      // Left Image
+      if (leftB64) {
+        const cleanL = leftB64.replace(/^data:image\/\w+;base64,/, "");
+        const bL = Uint8Array.from(atob(cleanL), c => c.charCodeAt(0));
+        photoCells.push(new TableCell({
+          children: [
+            new Paragraph({ children: [new TextRun({ text: pair.left.label, bold: true, size: 16 })] }),
+            new Paragraph({ children: [new ImageRun({ data: bL, transformation: { width: 280, height: 210 } })] })
+          ],
+          width: { size: 50, type: WidthType.PERCENTAGE }
+        }));
+      } else {
+        photoCells.push(new TableCell({ children: [new Paragraph(`[${pair.left.label}: Tidak Terlampir]`)], width: { size: 50, type: WidthType.PERCENTAGE } }));
       }
 
-      docChildren.push(
-        new Paragraph({ children: [new TextRun({ text: slot.label, bold: true })] }),
-        new Paragraph({
+      // Right Image
+      if (rightB64) {
+        const cleanR = rightB64.replace(/^data:image\/\w+;base64,/, "");
+        const bR = Uint8Array.from(atob(cleanR), c => c.charCodeAt(0));
+        photoCells.push(new TableCell({
           children: [
-            new ImageRun({
-              data: bytes,
-              transformation: { width: 320, height: 240 }
-            })
-          ]
-        }),
-        new Paragraph({ text: "" })
-      );
+            new Paragraph({ children: [new TextRun({ text: pair.right.label, bold: true, size: 16 })] }),
+            new Paragraph({ children: [new ImageRun({ data: bR, transformation: { width: 280, height: 210 } })] })
+          ],
+          width: { size: 50, type: WidthType.PERCENTAGE }
+        }));
+      } else {
+        photoCells.push(new TableCell({ children: [new Paragraph(`[${pair.right.label}: Tidak Terlampir]`)], width: { size: 50, type: WidthType.PERCENTAGE } }));
+      }
+
+      docSections.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [new TableRow({ children: photoCells })] }), new Paragraph({ text: "" }));
     }
   }
 
-  // Tanda Tangan / Lembar Pengesahan
-  docChildren.push(
+  // Lembar Pengesahan
+  docSections.push(
     new Paragraph({ text: "" }),
     new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
       rows: [
         new TableRow({
           children: [
-            new TableCell({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Teknisi Pelaksana,", bold: true })] })], width: { size: 50, type: WidthType.PERCENTAGE } }),
-            new TableCell({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Pendamping / PIC Site,", bold: true })] })], width: { size: 50, type: WidthType.PERCENTAGE } })
+            new TableCell({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Petugas / Teknisi Pelaksana,", bold: true })] })], width: { size: 50, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Penanggung Jawab / PIC Lokasi,", bold: true })] })], width: { size: 50, type: WidthType.PERCENTAGE } })
           ]
         }),
         new TableRow({
@@ -506,132 +677,97 @@ async function generateDocxBlob() {
     })
   );
 
-  const doc = new Document({
-    sections: [{ children: docChildren }]
-  });
-
+  const doc = new Document({ sections: [{ children: docSections }] });
   return await Packer.toBlob(doc);
 }
 
-// Handler Tombol: "Simpan ke HP / Laptop"
-async function downloadLocalWord() {
-  const logEl = document.getElementById("statusLog");
-  logEl.classList.add("show");
-  logEl.textContent = "⏳ Sedang membuat berkas Word (.docx)...";
+// Handler Tombol: Unduh Word
+async function generateBaktiWord() {
+  const log = document.getElementById("statusLog");
+  log.classList.add("show");
+  log.textContent = "⏳ Sedang menyusun dokumen Word Laporan BAKTI (.docx)...";
 
   try {
-    const blob = await generateDocxBlob();
-    const ticketNo = document.getElementById("ticketNo").value;
-    const client = (document.getElementById("clientName").value || "Klien").replace(/[^a-zA-Z0-9]/g, "_");
-    const filename = `${ticketNo}_${client}.docx`;
+    const blob = await buildBaktiDocx();
+    const siteId = (document.getElementById("siteId").value || "SITE").replace(/[^a-zA-Z0-9]/g, "_");
+    const workDate = document.getElementById("workDate").value.replace(/-/g, "");
+    const filename = `LAPORAN_BAKTI_${siteId}_${workDate}.docx`;
 
-    const downloadUrl = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = downloadUrl;
+    a.href = url;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(downloadUrl);
+    URL.revokeObjectURL(url);
 
-    logEl.textContent = `✔ Berkas berhasil diunduh ke perangkat Anda:\n📂 ${filename}`;
+    log.textContent = `✔ Berkas Word berhasil dibuat dan diunduh:\n📂 ${filename}`;
   } catch (err) {
-    logEl.textContent = `❌ Gagal membuat berkas Word: ${err.message}`;
+    log.textContent = `❌ Gagal membuat Word: ${err.message}`;
   }
 }
 
-// -------------------------------------------------------------
-// SUBMIT KE GOOGLE DRIVE & GOOGLE SHEETS
-// -------------------------------------------------------------
-async function submitReport() {
-  const logEl = document.getElementById("statusLog");
-  const pWrap = document.getElementById("progressWrap");
-  const pBar = document.getElementById("progressBar");
-  const btn = document.getElementById("submitBtn");
+// Handler Tombol: Kirim ke Drive & Sheets
+async function submitBaktiCloud() {
+  const log = document.getElementById("statusLog");
+  const btn = document.getElementById("btnUpload");
 
-  // Validasi Input Wajib
-  const techName = document.getElementById("techName").value.trim();
-  const clientName = document.getElementById("clientName").value.trim();
+  const siteId = document.getElementById("siteId").value.trim();
   const siteName = document.getElementById("siteName").value.trim();
-  const deviceSerial = document.getElementById("deviceSerial").value.trim();
+  const techName = document.getElementById("techName").value.trim();
 
-  if (!techName || !clientName || !siteName || !deviceSerial) {
-    alert("Harap lengkapi:\n- Nama Teknisi\n- Nama Pelanggan / Klien\n- Nama Site\n- Serial Number Perangkat");
+  if (!siteId || !siteName || !techName) {
+    alert("Harap lengkapi:\n- Site ID\n- Nama Site\n- Nama Teknisi");
+    switchTab(0);
     return;
   }
 
-  if (!photoData.before || !photoData.after) {
-    alert("Harap sertakan minimal Foto Sebelum (Before) dan Foto Sesudah (After) pengerjaan!");
-    return;
-  }
-
-  const gasUrl = localStorage.getItem(STORAGE_CFG_URL);
+  const gasUrl = localStorage.getItem("bakti_gas_url");
   if (!gasUrl) {
     toggleConfig();
-    alert("Harap masukkan URL Google Apps Script Backend di baris Pengaturan atas!");
+    alert("Harap masukkan URL Google Apps Script Backend di tombol Pengaturan atas!");
     return;
   }
 
-  logEl.classList.add("show");
-  pWrap.style.display = "block";
-  pBar.style.width = "20%";
+  log.classList.add("show");
+  log.textContent = "⏳ [1/3] Menghasilkan dokumen Word resmi...";
   btn.disabled = true;
 
-  logEl.textContent = "⏳ [1/3] Membuat dokumen Word laporan (.docx)...";
-
   try {
-    // 1. Generate Word Blob
-    const docxBlob = await generateDocxBlob();
-    pBar.style.width = "40%";
+    const docxBlob = await buildBaktiDocx();
 
-    // Convert Blob to Base64
-    logEl.textContent = "⏳ [2/3] Mengompresi berkas dan menyusun payload data...";
+    log.textContent = "⏳ [2/3] Mengompres berkas dan menyiapkan payload...";
     const reader = new FileReader();
-    const docxBase64 = await new Promise((resolve, reject) => {
-      reader.onload = () => resolve(reader.result.split(",")[1]);
-      reader.onerror = reject;
+    const docxBase64 = await new Promise((res, rej) => {
+      reader.onload = () => res(reader.result.split(",")[1]);
+      reader.onerror = rej;
       reader.readAsDataURL(docxBlob);
     });
 
-    pBar.style.width = "65%";
-    logEl.textContent = "⏳ [3/3] Mengirimkan data dan berkas ke Google Drive & Sheets...";
-
-    // Siapkan checklist PM jika tipe PM
-    const pmSummary = [];
-    PM_COMPONENTS.forEach((c) => {
-      const st = pmState[c.id];
-      if (st) {
-        pmSummary.push(`${c.name}: [Awal: ${st.before}, Akhir: ${st.after}] ${st.notes ? '(' + st.notes + ')' : ''}`);
-      }
-    });
+    log.textContent = "⏳ [3/3] Mengirimkan data dan berkas ke Google Drive & Sheets...";
 
     const payload = {
-      ticketNo: document.getElementById("ticketNo").value,
-      workType: document.getElementById("workType").value,
-      workDate: document.getElementById("workDate").value + " " + document.getElementById("workTime").value,
-      techName: techName,
-      techPhone: document.getElementById("techPhone").value,
-      techRegion: document.getElementById("techRegion").value,
-      clientName: clientName,
+      siteOwner: document.getElementById("siteOwner").value,
+      siteId: siteId,
       siteName: siteName,
       siteAddress: document.getElementById("siteAddress").value,
+      province: document.getElementById("province").value,
+      kabupaten: document.getElementById("kabupaten").value,
+      desa: document.getElementById("desa").value,
+      latitude: document.getElementById("latitude").value,
+      longitude: document.getElementById("longitude").value,
       picName: document.getElementById("picName").value,
-      picContact: document.getElementById("picPhone").value,
-      deviceType: document.getElementById("deviceType").value,
-      deviceBrand: document.getElementById("deviceBrand").value,
-      deviceSerial: deviceSerial,
-      cmIssue: document.getElementById("cmIssue").value || "-",
-      cmRootCause: document.getElementById("cmRootCause").value || "-",
-      cmAction: document.getElementById("cmAction").value || "-",
-      cmSparepart: document.getElementById("cmSparepart").value || "-",
-      pmChecklist: pmSummary.join(" | "),
-      pmNotes: "-",
-      workStatus: document.getElementById("workStatus").value,
-      recommendations: document.getElementById("recommendations").value,
-      photoBefore: photoData.before || "",
-      photoDuring: photoData.during || "",
-      photoAfter: photoData.after || "",
-      photoPic: photoData.pic || "",
+      picPhone: document.getElementById("picPhone").value,
+      techName: techName,
+      workDate: document.getElementById("workDate").value,
+      timeArrival: document.getElementById("timeArrival").value,
+      timeDeparture: document.getElementById("timeDeparture").value,
+      kegiatanType: document.getElementById("kegiatanType").value,
+      issueNotes: document.getElementById("issueNotes").value,
+      outdoorSummary: JSON.stringify(outdoorState),
+      indoorSummary: JSON.stringify(indoorState),
+      photos: photos,
       docxBase64: docxBase64
     };
 
@@ -641,21 +777,16 @@ async function submitReport() {
       body: JSON.stringify(payload)
     });
 
-    const resText = await res.text();
-    pBar.style.width = "100%";
     btn.disabled = false;
+    log.textContent = `🎉 LAPORAN BAKTI BERHASIL DIARSIPKAN!\n` +
+      `Site ID : ${siteId} - ${siteName}\n` +
+      `Teknisi : ${techName}\n` +
+      `Dokumen Word (.docx) & foto-foto telah terunggah ke Google Drive.`;
 
-    logEl.textContent = `🎉 LAPORAN BERHASIL DISIMPAN!\n` +
-      `Nomor Tiket : ${payload.ticketNo}\n` +
-      `Klien & Site: ${payload.clientName} - ${payload.siteName}\n` +
-      `Berkas Word (.docx) dan foto bukti kerja telah diarsipkan ke Google Drive Pentakom.`;
-
-    // Hapus draft setelah berhasil
-    localStorage.removeItem(STORAGE_DRAFT);
+    localStorage.removeItem("bakti_report_draft");
 
   } catch (err) {
-    pBar.style.width = "0%";
     btn.disabled = false;
-    logEl.textContent = `❌ Terjadi kesalahan saat pengiriman:\n${err.message}\n\nPastikan URL Web App Google Apps Script sudah benar & hak akses: 'Anyone'.`;
+    log.textContent = `❌ Terjadi kesalahan saat pengiriman:\n${err.message}`;
   }
 }
