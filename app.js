@@ -1373,6 +1373,41 @@ async function submitBaktiCloud() {
 
     log.textContent = "⏳ [3/3] Mengirimkan data dan berkas ke Google Drive & Sheets...";
 
+    // Ambil data SN Perangkat Sebelum dan Sesudah (Halaman 4 - Bagian VI)
+    const snBefore = {
+      apIndoor: (document.getElementById("sn_b_0")?.value || "").trim(),
+      apOutdoor: (document.getElementById("sn_b_1")?.value || "").trim(),
+      router: (document.getElementById("sn_b_2")?.value || "").trim(),
+      modem: (document.getElementById("sn_b_3")?.value || "").trim(),
+      antenna: (document.getElementById("sn_b_4")?.value || "").trim(),
+      buc: (document.getElementById("sn_b_5")?.value || "").trim(),
+      rack: (document.getElementById("sn_b_6")?.value || "").trim(),
+      stabilizer: (document.getElementById("sn_b_7")?.value || "").trim()
+    };
+
+    const snAfter = {
+      apIndoor: (document.getElementById("sn_a_0")?.value || "").trim(),
+      apOutdoor: (document.getElementById("sn_a_1")?.value || "").trim(),
+      router: (document.getElementById("sn_a_2")?.value || "").trim(),
+      modem: (document.getElementById("sn_a_3")?.value || "").trim(),
+      antenna: (document.getElementById("sn_a_4")?.value || "").trim(),
+      buc: (document.getElementById("sn_a_5")?.value || "").trim(),
+      rack: (document.getElementById("sn_a_6")?.value || "").trim(),
+      stabilizer: (document.getElementById("sn_a_7")?.value || "").trim()
+    };
+
+    // Nilai efektif untuk update database: utamakan SN Sesudah, fallback ke SN Sebelum jika tidak diganti
+    const effectiveSn = {
+      modem: snAfter.modem || snBefore.modem || "",
+      router: snAfter.router || snBefore.router || "",
+      apIndoor: snAfter.apIndoor || snBefore.apIndoor || "",
+      apOutdoor: snAfter.apOutdoor || snBefore.apOutdoor || "",
+      antenna: snAfter.antenna || snBefore.antenna || "",
+      buc: snAfter.buc || snBefore.buc || "",
+      rack: snAfter.rack || snBefore.rack || "",
+      stabilizer: snAfter.stabilizer || snBefore.stabilizer || ""
+    };
+
     const payload = {
       siteOwner: document.getElementById("siteOwner").value,
       siteId: siteId,
@@ -1391,6 +1426,9 @@ async function submitBaktiCloud() {
       timeDeparture: document.getElementById("timeDeparture").value,
       kegiatanType: document.getElementById("kegiatanType").value,
       issueNotes: document.getElementById("issueNotes").value,
+      snBefore: snBefore,
+      snAfter: snAfter,
+      effectiveSn: effectiveSn,
       outdoorSummary: JSON.stringify(outdoorState),
       indoorSummary: JSON.stringify(indoorState),
       photos: photos,
@@ -1404,10 +1442,43 @@ async function submitBaktiCloud() {
     });
 
     btn.disabled = false;
+
+    // Otomatis perbarui database lokal aplikasi (LOCATION_DB & localStorage) dengan SN Sesudah
+    if (typeof LOCATION_DB !== "undefined" && Array.isArray(LOCATION_DB)) {
+      const targetLoc = LOCATION_DB.find((l) => l.id.toLowerCase() === siteId.toLowerCase());
+      if (targetLoc) {
+        targetLoc.sn = targetLoc.sn || {};
+        if (effectiveSn.modem) targetLoc.sn.modem = effectiveSn.modem;
+        if (effectiveSn.router) targetLoc.sn.router = effectiveSn.router;
+        if (effectiveSn.apIndoor) targetLoc.sn.ap1 = effectiveSn.apIndoor;
+        if (effectiveSn.apOutdoor) targetLoc.sn.ap2 = effectiveSn.apOutdoor;
+        if (effectiveSn.antenna) targetLoc.sn.antenna = effectiveSn.antenna;
+        if (effectiveSn.buc) targetLoc.sn.transiver = effectiveSn.buc;
+        if (effectiveSn.rack) targetLoc.sn.rack = effectiveSn.rack;
+        if (effectiveSn.stabilizer) targetLoc.sn.stabilizer = effectiveSn.stabilizer;
+
+        try {
+          const customRaw = localStorage.getItem("pentakom_custom_locations");
+          let customList = customRaw ? JSON.parse(customRaw) : [];
+          const cIdx = customList.findIndex((c) => c.id.toLowerCase() === siteId.toLowerCase());
+          if (cIdx >= 0) {
+            customList[cIdx] = { ...customList[cIdx], ...targetLoc };
+          } else {
+            customList.push(targetLoc);
+          }
+          localStorage.setItem("pentakom_custom_locations", JSON.stringify(customList));
+        } catch (e) {
+          console.warn("Gagal simpan custom locations:", e);
+        }
+      }
+    }
+
     log.textContent = `🎉 LAPORAN BAKTI BERHASIL DIARSIPKAN!\n` +
       `Site ID : ${siteId} - ${siteName}\n` +
       `Teknisi : ${techName}\n` +
-      `Dokumen Word (.docx) & foto-foto telah terunggah ke Google Drive.`;
+      `✔ Dokumen Word (.docx) & foto-foto telah terunggah ke Google Drive.\n` +
+      `✔ Rekap laporan tercatat di Google Sheets.\n` +
+      `✔ Database 'Data SN Perangkat' otomatis terupdate dengan data SN Sesudah!`;
 
     localStorage.removeItem("bakti_report_draft");
 
@@ -1415,4 +1486,42 @@ async function submitBaktiCloud() {
     btn.disabled = false;
     log.textContent = `❌ Terjadi kesalahan saat pengiriman:\n${err.message}`;
   }
+}
+
+// Ekspor Seluruh Data SN Perangkat Terkini ke CSV
+function exportDataSnCsv() {
+  if (typeof LOCATION_DB === "undefined" || !Array.isArray(LOCATION_DB)) {
+    alert("Database lokasi belum dimuat.");
+    return;
+  }
+  const headers = ["Site ID (Kode Lokasi)", "MODEM", "ROUTER", "AP Indoor", "AP Outdoor", "ANTENNA", "BUC", "RACK", "STABILIZER"];
+  const rows = [headers.join(";")];
+
+  LOCATION_DB.forEach((loc) => {
+    const sn = loc.sn || {};
+    const row = [
+      loc.id || "",
+      sn.modem || "",
+      sn.router || "",
+      sn.ap1 || "",
+      sn.ap2 || "",
+      sn.antenna || "",
+      sn.transiver || "",
+      sn.rack || "",
+      sn.stabilizer || ""
+    ];
+    rows.push(row.map((cell) => String(cell).replace(/;/g, ",")).join(";"));
+  });
+
+  const csvContent = rows.join("\r\n");
+  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  a.href = url;
+  a.download = `Data_SN_Perangkat_${dateStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
