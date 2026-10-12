@@ -965,6 +965,9 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
+let currentPdfContainer = null;
+let currentPdfFilename = "LAPORAN_BAKTI.pdf";
+
 function buildBaktiPdfContainer() {
   const siteIdRaw = (document.getElementById("siteId")?.value || "").trim();
   const siteId = siteIdRaw || "SITE";
@@ -1053,25 +1056,25 @@ function buildBaktiPdfContainer() {
   const altRl = document.getElementById("altRl")?.value || "Tidak Ada";
   const altFo = document.getElementById("altFo")?.value || "Tidak Ada";
 
-  // Tabel Outdoor
+  // Tabel Outdoor (11 Item)
   let outRowsHtml = "";
   OUTDOOR_ITEMS.forEach((name, i) => {
     const st = outdoorState[i] || { before: "Berfungsi", after: "Berfungsi" };
     outRowsHtml += `<tr>
-      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1;">${escapeHtml(name)}</td>
-      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1; text-align: center;">${escapeHtml(st.before)}</td>
-      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1; text-align: center;">${escapeHtml(st.after)}</td>
+      <td style="padding: 4px 7px; border: 1px solid #cbd5e1; width: 52%;">${escapeHtml(name)}</td>
+      <td style="padding: 4px 7px; border: 1px solid #cbd5e1; text-align: center; width: 24%;">${escapeHtml(st.before)}</td>
+      <td style="padding: 4px 7px; border: 1px solid #cbd5e1; text-align: center; width: 24%;">${escapeHtml(st.after)}</td>
     </tr>`;
   });
 
-  // Tabel Indoor
+  // Tabel Indoor (16 Item)
   let inRowsHtml = "";
   INDOOR_ITEMS.forEach((name, i) => {
     const st = indoorState[i] || { before: "Berfungsi", after: "Berfungsi" };
     inRowsHtml += `<tr>
-      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1;">${escapeHtml(name)}</td>
-      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1; text-align: center;">${escapeHtml(st.before)}</td>
-      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1; text-align: center;">${escapeHtml(st.after)}</td>
+      <td style="padding: 4px 7px; border: 1px solid #cbd5e1; width: 52%;">${escapeHtml(name)}</td>
+      <td style="padding: 4px 7px; border: 1px solid #cbd5e1; text-align: center; width: 24%;">${escapeHtml(st.before)}</td>
+      <td style="padding: 4px 7px; border: 1px solid #cbd5e1; text-align: center; width: 24%;">${escapeHtml(st.after)}</td>
     </tr>`;
   });
 
@@ -1088,205 +1091,354 @@ function buildBaktiPdfContainer() {
     if (!snA && snB) snA = snB;
 
     snRowsHtml += `<tr>
-      <td style="text-align: center; padding: 4.5px 7px; border: 1px solid #cbd5e1;">${i + 1}</td>
-      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1;"><strong>${escapeHtml(name)}</strong></td>
-      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1;">${escapeHtml(snB || "-")}</td>
-      <td style="padding: 4.5px 7px; border: 1px solid #cbd5e1;">${escapeHtml(snA || "-")}</td>
+      <td style="text-align: center; padding: 4px 6px; border: 1px solid #cbd5e1; width: 8%;">${i + 1}</td>
+      <td style="padding: 4px 7px; border: 1px solid #cbd5e1; width: 34%;"><strong>${escapeHtml(name)}</strong></td>
+      <td style="padding: 4px 7px; border: 1px solid #cbd5e1; width: 29%;">${escapeHtml(snB || "-")}</td>
+      <td style="padding: 4px 7px; border: 1px solid #cbd5e1; width: 29%;">${escapeHtml(snA || "-")}</td>
     </tr>`;
   });
 
-  // Foto Dokumentasi
-  let photoPairsHtml = "";
-  let hasPhotos = false;
+  // Kumpulkan foto dokumentasi yang aktif
+  const activePhotoItems = [];
   PHOTO_PAIRS.forEach((pair) => {
     const leftB64 = photos[pair.left.id];
     const rightB64 = photos[pair.right.id];
     if (leftB64 || rightB64) {
-      hasPhotos = true;
-      const leftContent = leftB64
-        ? `<img class="pdf-photo-img" src="${leftB64}" alt="${escapeHtml(pair.left.label)}"><div class="pdf-photo-lbl">${escapeHtml(pair.left.label)}</div>`
-        : `<div class="pdf-photo-empty">[${escapeHtml(pair.left.label)}: Tidak Terlampir]</div>`;
-      const rightContent = rightB64
-        ? `<img class="pdf-photo-img" src="${rightB64}" alt="${escapeHtml(pair.right.label)}"><div class="pdf-photo-lbl">${escapeHtml(pair.right.label)}</div>`
-        : `<div class="pdf-photo-empty">[${escapeHtml(pair.right.label)}: Tidak Terlampir]</div>`;
-
-      photoPairsHtml += `
-        <div class="pdf-photo-card" style="page-break-inside: avoid; break-inside: avoid; border: 1px solid #e2e8f0; background: #ffffff; border-radius: 4px; padding: 8px; margin-bottom: 12px;">
-          <div class="pdf-photo-title" style="font-weight: 700; font-size: 10px; color: #0f2942; margin-bottom: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 3px;">📍 ${escapeHtml(pair.title)}</div>
-          <div class="pdf-photo-grid" style="display: flex; gap: 10px;">
-            <div class="pdf-photo-col" style="flex: 1; text-align: center; width: 50%;">${leftContent}</div>
-            <div class="pdf-photo-col" style="flex: 1; text-align: center; width: 50%;">${rightContent}</div>
-          </div>
-        </div>
-      `;
+      activePhotoItems.push({ pair, leftB64, rightB64 });
     }
   });
 
-  if (!hasPhotos) {
-    photoPairsHtml = `<div style="padding: 10px; color: #64748b; font-style: italic;">Tidak ada foto dokumentasi yang dilampirkan.</div>`;
+  function renderPhotoCardHtml(item) {
+    const leftContent = item.leftB64
+      ? `<img class="pdf-photo-img" src="${item.leftB64}" alt="${escapeHtml(item.pair.left.label)}"><div class="pdf-photo-lbl">${escapeHtml(item.pair.left.label)}</div>`
+      : `<div class="pdf-photo-empty">[${escapeHtml(item.pair.left.label)}: Tidak Terlampir]</div>`;
+
+    const rightContent = item.rightB64
+      ? `<img class="pdf-photo-img" src="${item.rightB64}" alt="${escapeHtml(item.pair.right.label)}"><div class="pdf-photo-lbl">${escapeHtml(item.pair.right.label)}</div>`
+      : `<div class="pdf-photo-empty">[${escapeHtml(item.pair.right.label)}: Tidak Terlampir]</div>`;
+
+    return `
+      <div class="pdf-photo-card" style="border: 1px solid #cbd5e1; background: #ffffff; border-radius: 4px; padding: 6px; margin-bottom: 8px;">
+        <div class="pdf-photo-title" style="font-weight: 700; font-size: 9.5px; color: #0f2942; margin-bottom: 4px; border-bottom: 1px solid #f1f5f9; padding-bottom: 2px;">📍 ${escapeHtml(item.pair.title)}</div>
+        <table class="pdf-photo-table" style="width: 100%; border-collapse: collapse; table-layout: fixed; border: none;">
+          <tr>
+            <td style="width: 50%; vertical-align: top; text-align: center; border: none; padding: 2px 4px;">${leftContent}</td>
+            <td style="width: 50%; vertical-align: top; text-align: center; border: none; padding: 2px 4px;">${rightContent}</td>
+          </tr>
+        </table>
+      </div>
+    `;
   }
 
-  // Buat kontainer dokumen di viewport normal (tanpa koordinat minus yang menyebabkan blank canvas)
+  // Lembar Pengesahan (Tanda Tangan)
+  const signatureBlockHtml = `
+    <table class="pdf-sign-table" style="width: 100%; table-layout: fixed; border: none; margin-top: 25px; page-break-inside: avoid; break-inside: avoid;">
+      <tr>
+        <td style="width: 50%; text-align: center; border: none; vertical-align: top; padding: 0 15px;">
+          <div style="font-weight: 700; font-size: 9.5px; color: #0f2942; margin-bottom: 55px;">Petugas / Teknisi Pelaksana,</div>
+          <div style="font-weight: 700; font-size: 9.5px; text-decoration: underline; color: #1e293b;">( ${escapeHtml(techName)} )</div>
+          <div style="font-size: 8.5px; color: #64748b; margin-top: 2px;">Teknisi Pemeliharaan</div>
+        </td>
+        <td style="width: 50%; text-align: center; border: none; vertical-align: top; padding: 0 15px;">
+          <div style="font-weight: 700; font-size: 9.5px; color: #0f2942; margin-bottom: 55px;">Penanggung Jawab / PIC Lokasi,</div>
+          <div style="font-weight: 700; font-size: 9.5px; text-decoration: underline; color: #1e293b;">( ${escapeHtml(picName)} )</div>
+          <div style="font-size: 8.5px; color: #64748b; margin-top: 2px;">PIC / Pengelola Lokasi</div>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  // Susun lembar foto
+  let photoSheetsHtml = "";
+  let totalPages = 3;
+
+  if (activePhotoItems.length === 0) {
+    totalPages = 3;
+    photoSheetsHtml = `
+      <div class="pdf-paper-sheet" id="pdfSheet3">
+        <div class="pdf-running-header">
+          <div class="pdf-running-title">LAPORAN PEMELIHARAAN (CM & PM) &mdash; <span style="color: #2563eb;">${escapeHtml(siteId)}</span> <span style="font-size: 8.5px; color: #64748b; font-weight: 600;">(${escapeHtml(siteName)})</span></div>
+          <div class="pdf-running-badge">BAKTI</div>
+        </div>
+        <div class="pdf-section-title">VII. DOKUMENTASI FOTO SEBELUM & SESUDAH CM/PM</div>
+        <div style="padding: 12px; border: 1px dashed #cbd5e1; border-radius: 4px; text-align: center; color: #64748b; font-style: italic; margin-bottom: 20px;">
+          Tidak ada foto dokumentasi yang dilampirkan.
+        </div>
+        ${signatureBlockHtml}
+        <div class="pdf-sheet-footer">
+          <div>Dokumen Resmi Pemeliharaan Perangkat Telekomunikasi &mdash; BAKTI Kominfo</div>
+          <div>Lembar 3 dari 3</div>
+        </div>
+      </div>
+    `;
+  } else if (activePhotoItems.length <= 3) {
+    totalPages = 3;
+    const cardsHtml = activePhotoItems.map(renderPhotoCardHtml).join("");
+    photoSheetsHtml = `
+      <div class="pdf-paper-sheet" id="pdfSheet3">
+        <div class="pdf-running-header">
+          <div class="pdf-running-title">LAPORAN PEMELIHARAAN (CM & PM) &mdash; <span style="color: #2563eb;">${escapeHtml(siteId)}</span> <span style="font-size: 8.5px; color: #64748b; font-weight: 600;">(${escapeHtml(siteName)})</span></div>
+          <div class="pdf-running-badge">BAKTI</div>
+        </div>
+        <div class="pdf-section-title">VII. DOKUMENTASI FOTO SEBELUM & SESUDAH CM/PM</div>
+        ${cardsHtml}
+        ${signatureBlockHtml}
+        <div class="pdf-sheet-footer">
+          <div>Dokumen Resmi Pemeliharaan Perangkat Telekomunikasi &mdash; BAKTI Kominfo</div>
+          <div>Lembar 3 dari 3</div>
+        </div>
+      </div>
+    `;
+  } else {
+    const chunks = [];
+    for (let i = 0; i < activePhotoItems.length; i += 3) {
+      chunks.push(activePhotoItems.slice(i, i + 3));
+    }
+    totalPages = 2 + chunks.length;
+
+    photoSheetsHtml = chunks.map((chunk, cIdx) => {
+      const pageNum = 3 + cIdx;
+      const isLastChunk = (cIdx === chunks.length - 1);
+      const cards = chunk.map(renderPhotoCardHtml).join("");
+      return `
+        <div class="pdf-paper-sheet" id="pdfSheet${pageNum}">
+          <div class="pdf-running-header">
+            <div class="pdf-running-title">LAPORAN PEMELIHARAAN (CM & PM) &mdash; <span style="color: #2563eb;">${escapeHtml(siteId)}</span> <span style="font-size: 8.5px; color: #64748b; font-weight: 600;">(${escapeHtml(siteName)})</span></div>
+            <div class="pdf-running-badge">BAKTI</div>
+          </div>
+          <div class="pdf-section-title">VII. DOKUMENTASI FOTO SEBELUM & SESUDAH CM/PM ${chunks.length > 1 ? `(Bagian ${cIdx + 1})` : ""}</div>
+          ${cards}
+          ${isLastChunk ? signatureBlockHtml : ""}
+          <div class="pdf-sheet-footer">
+            <div>Dokumen Resmi Pemeliharaan Perangkat Telekomunikasi &mdash; BAKTI Kominfo</div>
+            <div>Lembar ${pageNum} dari ${totalPages}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // Buat Container Utama
   const container = document.createElement("div");
   container.id = "baktiPdfReportContent";
-  container.style.width = "780px";
-  container.style.boxSizing = "border-box";
-  container.style.backgroundColor = "#ffffff";
-  container.style.color = "#1e293b";
-  container.style.padding = "20px 24px";
-  container.style.borderRadius = "4px";
-  container.style.boxShadow = "0 4px 20px rgba(0,0,0,0.15)";
-  container.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  container.className = "pdf-report-root";
 
   container.innerHTML = `
-    <div class="pdf-report-root">
-      <style>
-        .pdf-report-root {
-          width: 100%;
-          box-sizing: border-box;
-          background: #ffffff;
-          color: #1e293b;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          font-size: 10px;
-          line-height: 1.4;
-        }
-        .pdf-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-bottom: 2px solid #0f2942;
-          padding-bottom: 8px;
-          margin-bottom: 12px;
-        }
-        .pdf-header-title {
-          font-size: 14px;
-          font-weight: 800;
-          color: #0f2942;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        .pdf-header-sub {
-          font-size: 9px;
-          color: #64748b;
-          font-weight: 600;
-          margin-top: 2px;
-        }
-        .pdf-bakti-tag {
-          background: #e53935;
-          color: #ffffff;
-          font-weight: 800;
-          font-size: 13px;
-          padding: 4px 12px;
-          border-radius: 4px;
-          letter-spacing: 1px;
-        }
-        .pdf-section-title {
-          background: #0f2942;
-          color: #ffffff;
-          font-size: 10px;
-          font-weight: 700;
-          padding: 5px 8px;
-          border-radius: 3px;
-          margin-top: 14px;
-          margin-bottom: 8px;
-          text-transform: uppercase;
-          page-break-after: avoid;
-          break-after: avoid;
-        }
-        .pdf-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 10px;
-          font-size: 9.5px;
-        }
-        .pdf-table th {
-          background: #f1f5f9;
-          color: #0f2942;
-          font-weight: 700;
-          border: 1px solid #cbd5e1;
-          padding: 4.5px 7px;
-          text-align: left;
-        }
-        .pdf-table td {
-          border: 1px solid #cbd5e1;
-          padding: 4px 7px;
-          vertical-align: middle;
-        }
-        .pdf-table-admin td:first-child {
-          background: #f8fafc;
-          font-weight: 600;
-          width: 32%;
-          color: #334155;
-        }
-        .pdf-issue-box {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          border-left: 4px solid #2f6fed;
-          padding: 7px 10px;
-          font-size: 9.5px;
-          margin-bottom: 10px;
-          border-radius: 3px;
-          line-height: 1.45;
-        }
-        .pdf-photo-img {
-          width: 100%;
-          max-height: 200px;
-          object-fit: contain;
-          border: 1px solid #cbd5e1;
-          border-radius: 3px;
-          background: #f8fafc;
-          display: block;
-          margin: 0 auto;
-        }
-        .pdf-photo-empty {
-          height: 110px;
-          border: 1px dashed #cbd5e1;
-          background: #f8fafc;
-          border-radius: 3px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #94a3b8;
-          font-size: 9px;
-        }
-        .pdf-photo-lbl {
-          font-size: 9px;
-          font-weight: 600;
-          color: #475569;
-          margin-top: 4px;
-        }
-        .pdf-sign-table {
-          width: 100%;
-          margin-top: 25px;
-          border: none;
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        .pdf-sign-table td {
-          border: none;
-          text-align: center;
-          width: 50%;
-          vertical-align: top;
-          padding: 0 15px;
-        }
-        .pdf-sign-role {
-          font-weight: 700;
-          font-size: 10px;
-          color: #0f2942;
-        }
-        .pdf-sign-space {
-          height: 60px;
-        }
-        .pdf-sign-name {
-          font-weight: 700;
-          font-size: 10px;
-          text-decoration: underline;
-          color: #1e293b;
-        }
-      </style>
+    <style>
+      .pdf-report-root {
+        width: 710px;
+        box-sizing: border-box;
+        color: #1e293b;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 9.5px;
+        line-height: 1.35;
+        margin: 0 auto;
+      }
+      .pdf-paper-sheet {
+        background: #ffffff;
+        width: 710px;
+        box-sizing: border-box;
+        padding: 18px 22px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+        border-radius: 4px;
+        page-break-after: always;
+        break-after: page;
+      }
+      .pdf-paper-sheet:last-child {
+        page-break-after: auto;
+        break-after: auto;
+        margin-bottom: 0;
+      }
+      .pdf-header-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #0f2942;
+        padding-bottom: 6px;
+        margin-bottom: 10px;
+      }
+      .pdf-header-title {
+        font-size: 13.5px;
+        font-weight: 800;
+        color: #0f2942;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .pdf-header-sub {
+        font-size: 8.5px;
+        color: #64748b;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+      .pdf-bakti-tag {
+        background: #e53935;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 12px;
+        padding: 3px 10px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+      }
+      .pdf-running-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1.5px solid #0f2942;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+      }
+      .pdf-running-title {
+        font-size: 10px;
+        font-weight: 800;
+        color: #0f2942;
+        text-transform: uppercase;
+      }
+      .pdf-running-badge {
+        background: #e53935;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 9px;
+        padding: 2px 7px;
+        border-radius: 3px;
+      }
+      .pdf-section-title {
+        background: #0f2942;
+        color: #ffffff;
+        font-size: 9.5px;
+        font-weight: 700;
+        padding: 4px 7px;
+        border-radius: 3px;
+        margin-top: 8px;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+      .pdf-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin-bottom: 8px;
+        font-size: 9px;
+      }
+      .pdf-table th {
+        background: #0f2942;
+        color: #ffffff;
+        font-weight: 700;
+        border: 1px solid #cbd5e1;
+        padding: 4px 6px;
+        text-align: left;
+      }
+      .pdf-table td {
+        border: 1px solid #cbd5e1;
+        padding: 3.5px 6px;
+        vertical-align: middle;
+        word-break: break-word;
+      }
+      .pdf-table-admin td:first-child {
+        background: #f8fafc;
+        font-weight: 600;
+        width: 32%;
+        color: #334155;
+      }
+      .pdf-issue-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-left: 3.5px solid #2f6fed;
+        padding: 6px 9px;
+        font-size: 9px;
+        margin-bottom: 8px;
+        border-radius: 3px;
+        line-height: 1.4;
+      }
+      .pdf-photo-card {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        border-radius: 4px;
+        padding: 6px;
+        margin-bottom: 8px;
+      }
+      .pdf-photo-title {
+        font-weight: 700;
+        font-size: 9.5px;
+        color: #0f2942;
+        margin-bottom: 4px;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 2px;
+      }
+      .pdf-photo-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        border: none;
+      }
+      .pdf-photo-table td {
+        width: 50%;
+        vertical-align: top;
+        text-align: center;
+        border: none;
+        padding: 2px 4px;
+      }
+      .pdf-photo-img {
+        width: 100%;
+        max-height: 155px;
+        object-fit: contain;
+        border: 1px solid #cbd5e1;
+        border-radius: 3px;
+        background: #f8fafc;
+        display: block;
+        margin: 0 auto;
+      }
+      .pdf-photo-empty {
+        height: 95px;
+        border: 1px dashed #cbd5e1;
+        background: #f8fafc;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 8.5px;
+      }
+      .pdf-photo-lbl {
+        font-size: 8.5px;
+        font-weight: 600;
+        color: #475569;
+        margin-top: 3px;
+      }
+      .pdf-sign-table {
+        width: 100%;
+        table-layout: fixed;
+        border: none;
+        margin-top: 25px;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      .pdf-sign-table td {
+        border: none;
+        text-align: center;
+        width: 50%;
+        vertical-align: top;
+        padding: 0 15px;
+      }
+      .pdf-sheet-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid #e2e8f0;
+        margin-top: 12px;
+        padding-top: 4px;
+        font-size: 8px;
+        color: #94a3b8;
+      }
+    </style>
 
-      <!-- HEADER RESMI -->
-      <div class="pdf-header">
+    <!-- LEMBAR 1: INFORMASI UMUM, KONDISI & STATUS OUTDOOR -->
+    <div class="pdf-paper-sheet" id="pdfSheet1">
+      <div class="pdf-header-main">
         <div>
           <div class="pdf-header-title">LAPORAN PEMELIHARAAN (CM & PM)</div>
           <div class="pdf-header-sub">PEMELIHARAAN OPERASIONAL & PERANGKAT TELEKOMUNIKASI BAKTI</div>
@@ -1294,16 +1446,15 @@ function buildBaktiPdfContainer() {
         <div class="pdf-bakti-tag">BAKTI</div>
       </div>
 
-      <!-- INFORMASI UMUM & ADMINISTRASI LOKASI -->
       <table class="pdf-table pdf-table-admin">
         <tbody>
           <tr>
-            <td>Pemilik Site</td>
-            <td><strong>${escapeHtml(siteOwner)}</strong></td>
+            <td style="width: 32%;">Pemilik Site</td>
+            <td style="width: 68%;"><strong>${escapeHtml(siteOwner)}</strong></td>
           </tr>
           <tr>
             <td>Site ID (Kode Lokasi)</td>
-            <td><strong style="color: #0f2942; font-size: 10.5px;">${escapeHtml(siteId)}</strong></td>
+            <td><strong style="color: #0f2942; font-size: 10px;">${escapeHtml(siteId)}</strong></td>
           </tr>
           <tr>
             <td>Nama Site (Nama Site/Lokasi)</td>
@@ -1348,18 +1499,16 @@ function buildBaktiPdfContainer() {
         </tbody>
       </table>
 
-      <!-- BAGIAN I: PENJELASAN RINGKAS KONDISI -->
       <div class="pdf-section-title">I. PENJELASAN RINGKAS KONDISI / GANGGUAN PADA SAAT KEDATANGAN</div>
       <div class="pdf-issue-box">${escapeHtml(issueNotes)}</div>
 
-      <!-- BAGIAN II: STATUS OUTDOOR -->
       <div class="pdf-section-title">II. STATUS OUTDOOR (SEBELUM & SESUDAH MAINTENANCE)</div>
       <table class="pdf-table">
         <thead>
           <tr>
-            <th style="width: 50%;">ITEM FISIK OUTDOOR</th>
-            <th style="width: 25%; text-align: center;">SEBELUM</th>
-            <th style="width: 25%; text-align: center;">SESUDAH</th>
+            <th style="width: 52%;">ITEM FISIK OUTDOOR</th>
+            <th style="width: 24%; text-align: center;">SEBELUM</th>
+            <th style="width: 24%; text-align: center;">SESUDAH</th>
           </tr>
         </thead>
         <tbody>
@@ -1367,14 +1516,26 @@ function buildBaktiPdfContainer() {
         </tbody>
       </table>
 
-      <!-- BAGIAN III: STATUS INDOOR -->
+      <div class="pdf-sheet-footer">
+        <div>Dokumen Resmi Pemeliharaan Perangkat Telekomunikasi &mdash; BAKTI Kominfo</div>
+        <div>Lembar 1 dari ${totalPages}</div>
+      </div>
+    </div>
+
+    <!-- LEMBAR 2: STATUS INDOOR, POWER, ALTERNATIF JARINGAN & PERANGKAT TERPASANG -->
+    <div class="pdf-paper-sheet" id="pdfSheet2">
+      <div class="pdf-running-header">
+        <div class="pdf-running-title">LAPORAN PEMELIHARAAN (CM & PM) &mdash; <span style="color: #2563eb;">${escapeHtml(siteId)}</span> <span style="font-size: 8.5px; color: #64748b; font-weight: 600;">(${escapeHtml(siteName)})</span></div>
+        <div class="pdf-running-badge">BAKTI</div>
+      </div>
+
       <div class="pdf-section-title">III. STATUS INDOOR (SEBELUM & SESUDAH MAINTENANCE)</div>
       <table class="pdf-table">
         <thead>
           <tr>
-            <th style="width: 50%;">ITEM FISIK INDOOR</th>
-            <th style="width: 25%; text-align: center;">SEBELUM</th>
-            <th style="width: 25%; text-align: center;">SESUDAH</th>
+            <th style="width: 52%;">ITEM FISIK INDOOR</th>
+            <th style="width: 24%; text-align: center;">SEBELUM</th>
+            <th style="width: 24%; text-align: center;">SESUDAH</th>
           </tr>
         </thead>
         <tbody>
@@ -1382,7 +1543,6 @@ function buildBaktiPdfContainer() {
         </tbody>
       </table>
 
-      <!-- BAGIAN IV: STATUS POWER -->
       <div class="pdf-section-title">IV. STATUS POWER</div>
       <table class="pdf-table">
         <thead>
@@ -1436,14 +1596,13 @@ function buildBaktiPdfContainer() {
         </tbody>
       </table>
 
-      <!-- BAGIAN V: ALTERNATIF JARINGAN -->
       <div class="pdf-section-title">V. ALTERNATIF JARINGAN YANG ADA DI LOKASI</div>
       <table class="pdf-table">
         <thead>
           <tr>
             <th style="width: 40%;">JARINGAN ALTERNATIF</th>
-            <th style="width: 30%; text-align: center;">STATUS</th>
-            <th style="width: 30%;">NAMA OPERATOR</th>
+            <th style="width: 25%; text-align: center;">STATUS</th>
+            <th style="width: 35%;">NAMA OPERATOR</th>
           </tr>
         </thead>
         <tbody>
@@ -1470,7 +1629,6 @@ function buildBaktiPdfContainer() {
         </tbody>
       </table>
 
-      <!-- BAGIAN VI: PERANGKAT TERPASANG (SN) -->
       <div class="pdf-section-title">VI. PERANGKAT TERPASANG (SN / MAC / ALIAS)</div>
       <table class="pdf-table">
         <thead>
@@ -1486,26 +1644,14 @@ function buildBaktiPdfContainer() {
         </tbody>
       </table>
 
-      <!-- BAGIAN VII: DOKUMENTASI FOTO -->
-      <div class="pdf-section-title">VII. DOKUMENTASI FOTO SEBELUM & SESUDAH CM/PM</div>
-      ${photoPairsHtml}
-
-      <!-- LEMBAR PENGESAHAN -->
-      <table class="pdf-sign-table">
-        <tr>
-          <td>
-            <div class="pdf-sign-role">Petugas / Teknisi Pelaksana,</div>
-            <div class="pdf-sign-space"></div>
-            <div class="pdf-sign-name">( ${escapeHtml(techName)} )</div>
-          </td>
-          <td>
-            <div class="pdf-sign-role">Penanggung Jawab / PIC Lokasi,</div>
-            <div class="pdf-sign-space"></div>
-            <div class="pdf-sign-name">( ${escapeHtml(picName)} )</div>
-          </td>
-        </tr>
-      </table>
+      <div class="pdf-sheet-footer">
+        <div>Dokumen Resmi Pemeliharaan Perangkat Telekomunikasi &mdash; BAKTI Kominfo</div>
+        <div>Lembar 2 dari ${totalPages}</div>
+      </div>
     </div>
+
+    <!-- LEMBAR 3+: FOTO DOKUMENTASI & LEMBAR PENGESAHAN -->
+    ${photoSheetsHtml}
   `;
 
   const siteClean = (siteId || "SITE").replace(/[^a-zA-Z0-9]/g, "_");
@@ -1540,18 +1686,13 @@ async function getPdfBlob(container, opt) {
   return pdfInstance.output("blob");
 }
 
-// Handler Tombol: Unduh Laporan PDF (.pdf)
-async function generateBaktiPdf() {
-  const log = document.getElementById("statusLog");
-  log.classList.add("show");
-  log.textContent = "⏳ Memeriksa data dan menyusun dokumen PDF Laporan BAKTI...";
-
+// Buka Modal Pratinjau Dokumen PDF
+function previewBaktiPdf() {
   const siteId = (document.getElementById("siteId")?.value || "").trim();
   if (!siteId) {
     alert("Perhatian: Harap pilih atau ketik 'Site ID (Kode Lokasi)' di Halaman 1 terlebih dahulu!");
     switchTab(0);
     document.getElementById("siteId")?.focus();
-    log.textContent = "⚠️ Harap pilih Site ID terlebih dahulu.";
     return;
   }
 
@@ -1560,50 +1701,106 @@ async function generateBaktiPdf() {
     alert("Perhatian: Harap isi 'Petugas (Nama Teknisi)' di Halaman 1 terlebih dahulu!");
     switchTab(0);
     document.getElementById("techName")?.focus();
-    log.textContent = "⚠️ Harap isi Nama Teknisi terlebih dahulu.";
     return;
   }
 
-  let overlay = null;
+  const { container, filename } = buildBaktiPdfContainer();
+  currentPdfContainer = container;
+  currentPdfFilename = filename;
+
+  const siteName = (document.getElementById("siteName")?.value || "").trim();
+  const subEl = document.getElementById("pdfPreviewSubtitle");
+  if (subEl) {
+    subEl.textContent = `Site ID: ${siteId} ${siteName ? "(" + siteName + ")" : ""} | Berkas: ${filename}`;
+  }
+
+  const previewBody = document.getElementById("pdfPreviewBody");
+  if (previewBody) {
+    previewBody.innerHTML = "";
+    previewBody.appendChild(container);
+    previewBody.scrollTop = 0;
+  }
+
+  const modal = document.getElementById("pdfPreviewModal");
+  if (modal) {
+    modal.style.display = "flex";
+  }
+}
+
+// Tutup Modal Pratinjau
+function closeBaktiPdfPreview() {
+  const modal = document.getElementById("pdfPreviewModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
+// Cetak Laporan Langsung dari Pratinjau
+function printBaktiPdf() {
+  window.print();
+}
+
+// Unduh Berkas PDF dari Modal Pratinjau (Bebas Clipping & Presisi A4)
+async function downloadPdfFromPreview() {
+  if (!currentPdfContainer) {
+    alert("Data laporan belum dimuat. Silakan tutup dan buka pratinjau kembali.");
+    return;
+  }
+
+  const btn = document.getElementById("btnModalDownload");
+  const origText = btn ? btn.innerHTML : "⬇️ Unduh PDF (.pdf)";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = "⏳ Mengunduh...";
+  }
+
+  const log = document.getElementById("statusLog");
+  log.classList.add("show");
+  log.textContent = "⏳ Memproses berkas PDF Laporan BAKTI...";
+
+  let stage = null;
   try {
     if (typeof html2pdf === "undefined") {
       throw new Error("Pustaka html2pdf belum siap dimuat.");
     }
 
-    const { container, filename } = buildBaktiPdfContainer();
+    // Buat stage capture yang terisolasi di (0, 0)
+    stage = document.createElement("div");
+    stage.id = "pdfCaptureStage";
+    stage.style.position = "absolute";
+    stage.style.top = "0";
+    stage.style.left = "0";
+    stage.style.width = "720px";
+    stage.style.minWidth = "720px";
+    stage.style.maxWidth = "720px";
+    stage.style.boxSizing = "border-box";
+    stage.style.margin = "0";
+    stage.style.padding = "0";
+    stage.style.backgroundColor = "#ffffff";
+    stage.style.zIndex = "-999999";
+    stage.style.pointerEvents = "none";
 
-    // Tampilkan overlay render agar elemen ter-render secara utuh di DOM viewport (posisi 0,0 positif)
-    overlay = document.createElement("div");
-    overlay.id = "pdfGenerationOverlay";
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100vw";
-    overlay.style.height = "100vh";
-    overlay.style.backgroundColor = "rgba(15, 41, 66, 0.94)";
-    overlay.style.zIndex = "999999";
-    overlay.style.overflowY = "auto";
-    overlay.style.display = "flex";
-    overlay.style.flexDirection = "column";
-    overlay.style.alignItems = "center";
-    overlay.style.padding = "25px 10px";
-    overlay.style.boxSizing = "border-box";
+    const clone = currentPdfContainer.cloneNode(true);
+    const sheets = clone.querySelectorAll(".pdf-paper-sheet");
+    sheets.forEach((sh, idx) => {
+      sh.style.boxShadow = "none";
+      sh.style.margin = "0";
+      sh.style.width = "720px";
+      sh.style.padding = "20px 24px";
+      if (idx < sheets.length - 1) {
+        sh.style.pageBreakAfter = "always";
+        sh.style.breakAfter = "page";
+      } else {
+        sh.style.pageBreakAfter = "auto";
+        sh.style.breakAfter = "auto";
+      }
+    });
 
-    const banner = document.createElement("div");
-    banner.style.color = "#ffffff";
-    banner.style.fontSize = "14px";
-    banner.style.fontWeight = "bold";
-    banner.style.marginBottom = "12px";
-    banner.style.textAlign = "center";
-    banner.innerHTML = "⏳ Sedang memproses dan mengunduh berkas PDF Laporan BAKTI... Mohon tunggu sebentar.";
+    stage.appendChild(clone);
+    document.body.appendChild(stage);
 
-    overlay.appendChild(banner);
-    overlay.appendChild(container);
-    document.body.appendChild(overlay);
-
-    // Tunggu gambar selesai ter-decode
-    const imgElements = container.querySelectorAll("img");
-    await Promise.all(Array.from(imgElements).map(img => {
+    const imgs = stage.querySelectorAll("img");
+    await Promise.all(Array.from(imgs).map(img => {
       if (img.complete) return Promise.resolve();
       return new Promise(res => {
         img.onload = res;
@@ -1611,45 +1808,57 @@ async function generateBaktiPdf() {
       });
     }));
 
-    // Beri jeda 200ms agar browser selesai painting
     await new Promise(r => setTimeout(r, 200));
 
     const opt = {
-      margin: [8, 8, 8, 8],
-      filename: filename,
-      image: { type: "jpeg", quality: 0.95 },
+      margin: [6, 0, 6, 0],
+      filename: currentPdfFilename,
+      image: { type: "jpeg", quality: 0.96 },
       html2canvas: {
         scale: 2,
         useCORS: true,
         logging: false,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: 800
+        x: 0,
+        y: 0,
+        width: 720,
+        windowWidth: 720
       },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] }
+      pagebreak: { mode: ["css", "legacy"] }
     };
 
-    await html2pdf().set(opt).from(container).save();
+    await html2pdf().set(opt).from(stage).save();
 
-    if (overlay && overlay.parentNode) {
-      overlay.parentNode.removeChild(overlay);
-      overlay = null;
+    if (stage && stage.parentNode) {
+      stage.parentNode.removeChild(stage);
+      stage = null;
     }
 
-    log.textContent = `✔ Berkas PDF berhasil dibuat dan diunduh:\n📂 ${filename}`;
+    log.textContent = `✔ Berkas PDF berhasil diunduh:\n📂 ${currentPdfFilename}`;
   } catch (err) {
-    if (overlay && overlay.parentNode) {
-      overlay.parentNode.removeChild(overlay);
+    if (stage && stage.parentNode) {
+      stage.parentNode.removeChild(stage);
     }
-    log.textContent = `❌ Gagal membuat PDF: ${err.message}`;
-    console.error("PDF generation error:", err);
+    log.textContent = `❌ Gagal mengunduh PDF: ${err.message}`;
+    console.error("Download PDF error:", err);
+    alert("Gagal mengunduh PDF: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
   }
 }
 
-// Alias legacy untuk backward compatibility (menghasilkan PDF)
+// Handler tombol footer: membuka modal pratinjau terlebih dahulu
+async function generateBaktiPdf() {
+  previewBaktiPdf();
+}
+
 async function generateBaktiWord() {
-  return await generateBaktiPdf();
+  previewBaktiPdf();
 }
 
 // Handler Tombol: Kirim ke Drive & Sheets
@@ -1678,39 +1887,46 @@ async function submitBaktiCloud() {
   log.textContent = "⏳ [1/3] Menghasilkan dokumen PDF resmi...";
   btn.disabled = true;
 
-  let overlay = null;
+  let stage = null;
   try {
     const { container, filename } = buildBaktiPdfContainer();
 
-    overlay = document.createElement("div");
-    overlay.id = "pdfGenerationOverlay";
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100vw";
-    overlay.style.height = "100vh";
-    overlay.style.backgroundColor = "rgba(15, 41, 66, 0.94)";
-    overlay.style.zIndex = "999999";
-    overlay.style.overflowY = "auto";
-    overlay.style.display = "flex";
-    overlay.style.flexDirection = "column";
-    overlay.style.alignItems = "center";
-    overlay.style.padding = "25px 10px";
-    overlay.style.boxSizing = "border-box";
+    // Gunakan capture stage terisolasi (0, 0) yang sama agar posisi presisi tanpa cut off
+    stage = document.createElement("div");
+    stage.id = "pdfCaptureStage";
+    stage.style.position = "absolute";
+    stage.style.top = "0";
+    stage.style.left = "0";
+    stage.style.width = "720px";
+    stage.style.minWidth = "720px";
+    stage.style.maxWidth = "720px";
+    stage.style.boxSizing = "border-box";
+    stage.style.margin = "0";
+    stage.style.padding = "0";
+    stage.style.backgroundColor = "#ffffff";
+    stage.style.zIndex = "-999999";
+    stage.style.pointerEvents = "none";
 
-    const banner = document.createElement("div");
-    banner.style.color = "#ffffff";
-    banner.style.fontSize = "14px";
-    banner.style.fontWeight = "bold";
-    banner.style.marginBottom = "12px";
-    banner.style.textAlign = "center";
-    banner.innerHTML = "⏳ [1/3] Menyiapkan dokumen PDF Laporan BAKTI...";
+    const clone = container.cloneNode(true);
+    const sheets = clone.querySelectorAll(".pdf-paper-sheet");
+    sheets.forEach((sh, idx) => {
+      sh.style.boxShadow = "none";
+      sh.style.margin = "0";
+      sh.style.width = "720px";
+      sh.style.padding = "20px 24px";
+      if (idx < sheets.length - 1) {
+        sh.style.pageBreakAfter = "always";
+        sh.style.breakAfter = "page";
+      } else {
+        sh.style.pageBreakAfter = "auto";
+        sh.style.breakAfter = "auto";
+      }
+    });
 
-    overlay.appendChild(banner);
-    overlay.appendChild(container);
-    document.body.appendChild(overlay);
+    stage.appendChild(clone);
+    document.body.appendChild(stage);
 
-    const imgElements = container.querySelectorAll("img");
+    const imgElements = stage.querySelectorAll("img");
     await Promise.all(Array.from(imgElements).map(img => {
       if (img.complete) return Promise.resolve();
       return new Promise(res => {
@@ -1722,26 +1938,29 @@ async function submitBaktiCloud() {
     await new Promise(r => setTimeout(r, 200));
 
     const opt = {
-      margin: [8, 8, 8, 8],
+      margin: [6, 0, 6, 0],
       filename: filename,
-      image: { type: "jpeg", quality: 0.95 },
+      image: { type: "jpeg", quality: 0.96 },
       html2canvas: {
         scale: 2,
         useCORS: true,
         logging: false,
         scrollX: 0,
         scrollY: 0,
-        windowWidth: 800
+        x: 0,
+        y: 0,
+        width: 720,
+        windowWidth: 720
       },
       jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] }
+      pagebreak: { mode: ["css", "legacy"] }
     };
 
-    const pdfBlob = await getPdfBlob(container, opt);
+    const pdfBlob = await getPdfBlob(stage, opt);
 
-    if (overlay && overlay.parentNode) {
-      overlay.parentNode.removeChild(overlay);
-      overlay = null;
+    if (stage && stage.parentNode) {
+      stage.parentNode.removeChild(stage);
+      stage = null;
     }
 
     log.textContent = "⏳ [2/3] Mengompres berkas dan menyiapkan payload...";
