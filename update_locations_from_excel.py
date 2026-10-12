@@ -169,6 +169,8 @@ def main():
     
     # Sumber data yang diutamakan
     preferred_sources = [
+        os.path.join(base_dir, 'Data_Teknis'),
+        os.path.join(base_dir, 'Data_Teknis.csv'),
         os.path.join(base_dir, 'Data Site - Teknisi.xlsx'),
         os.path.join(base_dir, 'Data Site - Teknisi.csv'),
         os.path.join(base_dir, 'Template_Data_Teknis_Pentakom.xlsx'),
