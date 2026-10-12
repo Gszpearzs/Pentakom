@@ -145,6 +145,7 @@ const photos = {};
 // Inisialisasi
 document.addEventListener("DOMContentLoaded", () => {
   initDateDefaults();
+  initSiteDatalists();
   renderInspectionTables();
   renderSnTable();
   renderPhotoPairs();
@@ -152,6 +153,130 @@ document.addEventListener("DOMContentLoaded", () => {
   restoreDraft();
   setupAutoSave();
 });
+
+// Inisialisasi Datalist Pencarian Site
+function initSiteDatalists() {
+  if (typeof LOCATION_DB === "undefined" || !Array.isArray(LOCATION_DB)) return;
+  const dlId = document.getElementById("siteIdDatalist");
+  const dlName = document.getElementById("siteNameDatalist");
+  if (!dlId || !dlName) return;
+
+  dlId.innerHTML = "";
+  dlName.innerHTML = "";
+
+  LOCATION_DB.forEach((loc) => {
+    const optId = document.createElement("option");
+    optId.value = loc.id;
+    optId.label = loc.nama;
+    optId.textContent = `${loc.id} - ${loc.nama}`;
+    dlId.appendChild(optId);
+
+    const optName = document.createElement("option");
+    optName.value = loc.nama;
+    optName.label = loc.id;
+    optName.textContent = `${loc.nama} (${loc.id})`;
+    dlName.appendChild(optName);
+  });
+}
+
+// Auto-Fill Otomatis dari Data Teknis saat Site Dipilih / Diketik
+function handleSiteSelect(query, type) {
+  if (typeof LOCATION_DB === "undefined" || !Array.isArray(LOCATION_DB)) return;
+  if (!query || query.trim().length < 2) return;
+
+  const q = query.trim().toLowerCase();
+
+  // 1. Cari exact match terlebih dahulu agar tidak menimpa saat baru mengetik
+  let match = LOCATION_DB.find((loc) => {
+    if (type === "id") {
+      return loc.id.toLowerCase() === q;
+    } else {
+      return loc.nama.toLowerCase() === q;
+    }
+  });
+
+  // 2. Jika tidak cocok, coba exact match silang (id atau nama)
+  if (!match) {
+    match = LOCATION_DB.find((loc) => loc.id.toLowerCase() === q || loc.nama.toLowerCase() === q);
+  }
+
+  // 3. Jika query panjang (>= 6 karakter) dan belum match, coba kecocokan penuh ID
+  if (!match && q.length >= 6) {
+    match = LOCATION_DB.find((loc) => loc.id.toLowerCase() === q);
+  }
+
+  const notice = document.getElementById("siteAutoFillNotice");
+
+  if (match) {
+    // 1. Informasi Lokasi & Administrasi
+    const elSiteId = document.getElementById("siteId");
+    const elSiteName = document.getElementById("siteName");
+    if (elSiteId) elSiteId.value = match.id;
+    if (elSiteName) elSiteName.value = match.nama;
+    if (match.alamat) document.getElementById("siteAddress").value = match.alamat;
+    if (match.provinsi) document.getElementById("province").value = match.provinsi;
+    if (match.kabupaten) document.getElementById("kabupaten").value = match.kabupaten;
+    if (match.lat) document.getElementById("latitude").value = match.lat;
+    if (match.lon) document.getElementById("longitude").value = match.lon;
+
+    // 2. Serial Number Perangkat Terpasang (SEBELUM) - Otomatis dari Data Teknis
+    let snCount = 0;
+    if (match.sn) {
+      // 0: AP Indoor -> match.sn.ap1
+      const elAp1 = document.getElementById("sn_b_0");
+      if (elAp1 && match.sn.ap1) { elAp1.value = match.sn.ap1; snCount++; }
+
+      // 1: AP Outdoor -> match.sn.ap2
+      const elAp2 = document.getElementById("sn_b_1");
+      if (elAp2 && match.sn.ap2) { elAp2.value = match.sn.ap2; snCount++; }
+
+      // 2: ROUTER -> match.sn.router
+      const elRouter = document.getElementById("sn_b_2");
+      if (elRouter && match.sn.router) { elRouter.value = match.sn.router; snCount++; }
+
+      // 3: MODEM -> match.sn.modem
+      const elModem = document.getElementById("sn_b_3");
+      if (elModem && match.sn.modem) { elModem.value = match.sn.modem; snCount++; }
+
+      // 5: BUC / Transceiver -> match.sn.transiver
+      const elBuc = document.getElementById("sn_b_5");
+      if (elBuc && match.sn.transiver) { elBuc.value = match.sn.transiver; snCount++; }
+
+      // 7: STABILIZER -> match.sn.stabilizer
+      const elStab = document.getElementById("sn_b_7");
+      if (elStab && match.sn.stabilizer) { elStab.value = match.sn.stabilizer; snCount++; }
+    }
+
+    if (notice) {
+      notice.style.display = "block";
+      notice.innerHTML = `✅ <strong>Auto-Fill Berhasil:</strong> Data teknis <em>${match.nama}</em> (${match.id}) telah otomatis mengisi Alamat, Provinsi, Kabupaten, Koordinat GPS, dan ${snCount} Serial Number perangkat!`;
+      notice.style.background = "#e8f8f5";
+      notice.style.color = "#117a65";
+      notice.style.border = "1px solid #a3e4d7";
+    }
+
+    saveDraft();
+  }
+}
+
+// Salin SN Sebelum ke Sesudah (Jika Perangkat Tidak Diganti)
+function copySnBeforeToAfter() {
+  let copied = 0;
+  SN_ITEMS.forEach((_, idx) => {
+    const elB = document.getElementById(`sn_b_${idx}`);
+    const elA = document.getElementById(`sn_a_${idx}`);
+    if (elB && elA && elB.value.trim() && !elA.value.trim()) {
+      elA.value = elB.value.trim();
+      copied++;
+    }
+  });
+  saveDraft();
+  if (copied > 0) {
+    alert(`Berhasil menyalin ${copied} nomor seri dari kolom Sebelum ke Sesudah.`);
+  } else {
+    alert("Kolom SN Sesudah sudah terisi atau kolom SN Sebelum masih kosong.");
+  }
+}
 
 // Tab Switcher
 function switchTab(index) {

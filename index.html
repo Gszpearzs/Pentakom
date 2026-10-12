@@ -432,17 +432,21 @@
         </select>
 
         <div class="row2">
-          <div>
+          <div style="position: relative;">
             <label>Site ID (Kode Lokasi) <span style="color:var(--red)">*</span></label>
-            <input type="text" id="siteId" placeholder="Ketik Site ID atau pilih dari list..." oninput="searchSite(this.value)">
+            <input type="text" id="siteId" placeholder="Ketik Site ID (otomatis mengisi data)..." list="siteIdDatalist" oninput="handleSiteSelect(this.value, 'id')" onchange="handleSiteSelect(this.value, 'id')">
+            <datalist id="siteIdDatalist"></datalist>
           </div>
-          <div>
+          <div style="position: relative;">
             <label>Nama Site (Nama Lokasi) <span style="color:var(--red)">*</span></label>
-            <input type="text" id="siteName" placeholder="Contoh: SMPN 1 Suoh / Desa XYZ" oninput="searchSite(this.value)">
+            <input type="text" id="siteName" placeholder="Ketik Nama Site (otomatis mengisi data)..." list="siteNameDatalist" oninput="handleSiteSelect(this.value, 'nama')" onchange="handleSiteSelect(this.value, 'nama')">
+            <datalist id="siteNameDatalist"></datalist>
           </div>
         </div>
 
-        <label>Alamat Lengkap Site/Lokasi</label>
+        <div id="siteAutoFillNotice" style="display:none; margin-top: 8px; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; border: 1px solid transparent;"></div>
+
+        <label style="margin-top: 10px;">Alamat Lengkap Site/Lokasi</label>
         <textarea id="siteAddress" rows="2" placeholder="Nama Jalan, Kampung, Dusun, RT/RW..."></textarea>
 
         <div class="row3">
@@ -721,7 +725,10 @@
     <div class="section-panel" id="tab3">
       <div class="card">
         <div class="card-title">VI. Perangkat Terpasang (SN / MAC / ALIAS)</div>
-        <p style="font-size: .75rem; color: var(--muted); margin-bottom: 12px;">Catat nomor seri perangkat sebelum dan sesudah dilakukan maintenance.</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+          <p style="font-size: .75rem; color: var(--muted); margin: 0;">Catat nomor seri perangkat sebelum dan sesudah dilakukan maintenance.</p>
+          <button type="button" class="btn-subtle" onclick="copySnBeforeToAfter()" style="background: var(--light-blue); color: var(--navy); border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">📋 Salin Semua SN Sebelum ke Sesudah</button>
+        </div>
 
         <table class="inspection-table">
           <thead>
@@ -768,6 +775,7 @@
   </div>
 </div>
 
+<script src="locations.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
