@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pentakom - Formulir Laporan CM & PM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="brand-badge">
+          <span class="brand-icon">⚡</span>
+          <span class="brand-name">PENTAKOM</span>
+        </div>
+        <h1 class="header-title">Formulir Laporan Teknisi</h1>
+        <p class="header-subtitle">Corrective Maintenance (CM) & Preventive Maintenance (PM)</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" id="btnOpenConfig" class="btn-icon" title="Pengaturan Web App URL">
+          ⚙️ <span class="badge-dot" id="configStatusDot"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Notification Banner -->
+    <div id="draftNotice" class="notice-banner hidden">
+      <span>💾 Ditemukan draf laporan yang tersimpan otomatis sebelumnya.</span>
+      <button type="button" id="btnRestoreDraft" class="btn-text">Pulihkan Draf</button>
+      <button type="button" id="btnDismissDraft" class="btn-close">&times;</button>
+    </div>
+
+    <!-- Main Form -->
+    <form id="cmpmForm" novalidate>
+      <!-- SECTION 1: TIPE PEKERJAAN & TIKET -->
+      <section class="card section-card">
+        <div class="card-header">
+          <span class="step-num">1</span>
+          <div>
+            <h2 class="card-title">Tipe Pemeliharaan</h2>
+            <p class="card-desc">Pilih kategori pekerjaan yang dilakukan di lapangan</p>
+          </div>
+        </div>
+
+        <div class="work-type-selector">
+          <label class="type-option">
+            <input type="radio" name="workType" value="CM" checked id="radioCM">
+            <div class="type-card">
+              <div class="type-icon">🛠️</div>
+              <div class="type-info">
+                <span class="type-name">Corrective Maintenance (CM)</span>
+                <span class="type-desc">Perbaikan insidental atas keluhan / kerusakan</span>
+              </div>
+            </div>
+          </label>
+
+          <label class="type-option">
+            <input type="radio" name="workType" value="PM" id="radioPM">
+            <div class="type-card">
+              <div class="type-icon">📋</div>
+              <div class="type-info">
+                <span class="type-name">Preventive Maintenance (PM)</span>
+                <span class="type-desc">Pemeriksaan & perawatan terjadwal rutin</span>
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <div class="grid-2 mt-3">
+          <div class="form-group">
+            <label for="ticketNo">No. Tiket / Referensi <span class="required">*</span></label>
+            <div class="input-with-action">
+              <input type="text" id="ticketNo" name="ticketNo" required placeholder="PKM-20261012-001">
+              <button type="button" id="btnGenTicket" class="btn-small" title="Generate Otomatis">Baru 🔄</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="workDate">Tanggal & Waktu Pekerjaan <span class="required">*</span></label>
+            <input type="datetime-local" id="workDate" name="workDate" required>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: IDENTITAS TEKNISI & WILAYAH -->
+      <section class="card section-card">
+        <div class="card-header">
+          <span class="step-num">2</span>
+          <div>
+            <h2 class="card-title">Informasi Teknisi & Wilayah</h2>
+            <p class="card-desc">Data personel yang bertugas di lokasi</p>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label for="techName">Nama Teknisi <span class="required">*</span></label>
+            <input type="text" id="techName" name="techName" required placeholder="Contoh: Budi Santoso">
+          </div>
+          <div class="form-group">
+            <label for="techPhone">No. WhatsApp / HP <span class="required">*</span></label>
+            <input type="tel" id="techPhone" name="techPhone" required placeholder="Contoh: 081234567890">
+          </div>
+          <div class="form-group">
+            <label for="techRegion">Wilayah / Regional <span class="required">*</span></label>
+            <select id="techRegion" name="techRegion" required>
+              <option value="">-- Pilih Wilayah --</option>
+              <option value="Jakarta & Sekitarnya">Jakarta & Sekitarnya</option>
+              <option value="Jawa Barat">Jawa Barat</option>
+              <option value="Jawa Tengah & DIY">Jawa Tengah & DIY</option>
+              <option value="Jawa Timur">Jawa Timur</option>
+              <option value="Sumatera Bagian Utara">Sumatera Bagian Utara</option>
+              <option value="Sumatera Bagian Selatan">Sumatera Bagian Selatan</option>
+              <option value="Kalimantan">Kalimantan</option>
+              <option value="Sulawesi">Sulawesi</option>
+              <option value="Bali & Nusa Tenggara">Bali & Nusa Tenggara</option>
+              <option value="Maluku & Papua">Maluku & Papua</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: DATA KLIEN & SITE -->
+      <section class="card section-card">
+        <div class="card-header">
+          <span class="step-num">3</span>
+          <div>
+            <h2 class="card-title">Data Klien & Lokasi Site</h2>
+            <p class="card-desc">Rincian lokasi dan kontak penanggung jawab di tempat</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="clientName">Nama Pelanggan / Perusahaan <span class="required">*</span></label>
+            <input type="text" id="clientName" name="clientName" required placeholder="Contoh: Bank ABC / PT XYZ">
+          </div>
+          <div class="form-group">
+            <label for="siteName">Nama Site / Lokasi Cabang <span class="required">*</span></label>
+            <input type="text" id="siteName" name="siteName" required placeholder="Contoh: Cabang Utama Sudirman">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="siteAddress">Alamat Lengkap Site <span class="required">*</span></label>
+          <textarea id="siteAddress" name="siteAddress" rows="2" required placeholder="Jl. Jenderal Sudirman No. ..."></textarea>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="picName">Nama PIC / Pendamping Site <span class="required">*</span></label>
+            <input type="text" id="picName" name="picName" required placeholder="Contoh: Pak Ahmad">
+          </div>
+          <div class="form-group">
+            <label for="picContact">No. Kontak PIC Site</label>
+            <input type="tel" id="picContact" name="picContact" placeholder="Contoh: 081809xxxxxx">
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: DATA PERANGKAT -->
+      <section class="card section-card">
+        <div class="card-header">
+          <span class="step-num">4</span>
+          <div>
+            <h2 class="card-title">Identitas Perangkat</h2>
+            <p class="card-desc">Informasi unit atau hardware yang diperiksa</p>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label for="deviceType">Jenis / Tipe Perangkat <span class="required">*</span></label>
+            <input type="text" id="deviceType" name="deviceType" required placeholder="Contoh: Router / Server / UPS / CCTV">
+          </div>
+          <div class="form-group">
+            <label for="deviceBrand">Merk & Model / Seri</label>
+            <input type="text" id="deviceBrand" name="deviceBrand" placeholder="Contoh: Cisco Catalyst 2960">
+          </div>
+          <div class="form-group">
+            <label for="deviceSerial">Serial Number (S/N) / Asset ID <span class="required">*</span></label>
+            <input type="text" id="deviceSerial" name="deviceSerial" required placeholder="Contoh: SN-892301923">
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5A: DETAIL CM (TAMPIL HANYA JIKA CM) -->
+      <section id="sectionCM" class="card section-card dynamic-section">
+        <div class="card-header">
+          <span class="step-num highlight-cm">5</span>
+          <div>
+            <h2 class="card-title">Rincian Penanganan Kerusakan (CM)</h2>
+            <p class="card-desc">Gejala awal, analisa akar masalah, dan perbaikan yang dilakukan</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="cmIssue">Gejala Kerusakan / Keluhan Awal <span class="required">*</span></label>
+          <textarea id="cmIssue" name="cmIssue" rows="2" placeholder="Jelaskan apa kendala atau alarm yang muncul..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="cmRootCause">Analisis Penyebab (Root Cause)</label>
+          <textarea id="cmRootCause" name="cmRootCause" rows="2" placeholder="Penyebab kendala ditemukan (kabel putus, modul short, overheat, dll)..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="cmAction">Tindakan Korektif / Solusi <span class="required">*</span></label>
+          <textarea id="cmAction" name="cmAction" rows="3" placeholder="Langkah perbaikan yang telah dilaksanakan teknisi..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="cmSparepart">Penggantian Sparepart (Bila Ada)</label>
+          <input type="text" id="cmSparepart" name="cmSparepart" placeholder="Contoh: Power Supply 12V 5A, Kabel Patchcord 3m (atau isi: Tidak Ada)">
+        </div>
+      </section>
+
+      <!-- SECTION 5B: DETAIL PM (TAMPIL HANYA JIKA PM) -->
+      <section id="sectionPM" class="card section-card dynamic-section hidden">
+        <div class="card-header">
+          <span class="step-num highlight-pm">5</span>
+          <div>
+            <h2 class="card-title">Checklist Pemeliharaan Rutin (PM)</h2>
+            <p class="card-desc">Beri centang pada item pemeriksaan yang telah diselesaikan</p>
+          </div>
+        </div>
+
+        <div class="checklist-grid">
+          <label class="check-item">
+            <input type="checkbox" name="pmChecklist" value="Pembersihan Fisik & Debu">
+            <span class="check-box"></span>
+            <span class="check-label">Pembersihan Fisik & Pembuangan Debu Rak/Unit</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="pmChecklist" value="Pemeriksaan Kabel & Konektor">
+            <span class="check-box"></span>
+            <span class="check-label">Pemeriksaan Kerapihan & Kencangnya Kabel / Konektor</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="pmChecklist" value="Pengukuran Tegangan & Kelistrikan">
+            <span class="check-box"></span>
+            <span class="check-label">Pengukuran Tegangan / Power Supply / Baterai UPS</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="pmChecklist" value="Pemeriksaan Suhu & Sirkulasi Fan">
+            <span class="check-box"></span>
+            <span class="check-label">Pengecekan Fan Pendingin & Suhu Operasional Ruangan</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="pmChecklist" value="Uji Konektivitas & Ping Test">
+            <span class="check-box"></span>
+            <span class="check-label">Uji Konektivitas, Throughput / Ping Test Jaringan</span>
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="pmChecklist" value="Backup Konfigurasi & Firmware">
+            <span class="check-box"></span>
+            <span class="check-label">Pencadangan (Backup) Konfigurasi & Cek Log Error</span>
+          </label>
+        </div>
+
+        <div class="form-group mt-3">
+          <label for="pmNotes">Catatan & Temuan Kondisi PM</label>
+          <textarea id="pmNotes" name="pmNotes" rows="3" placeholder="Catatan khusus mengenai kondisi lingkungan, voltase, atau saran penggantian preventif..."></textarea>
+        </div>
+      </section>
+
+      <!-- SECTION 6: STATUS AKHIR & HASIL -->
+      <section class="card section-card">
+        <div class="card-header">
+          <span class="step-num">6</span>
+          <div>
+            <h2 class="card-title">Hasil Akhir & Rekomendasi</h2>
+            <p class="card-desc">Status penyelesaian pekerjaan saat teknisi meninggalkan site</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="workStatus">Status Pekerjaan <span class="required">*</span></label>
+            <select id="workStatus" name="workStatus" required>
+              <option value="Selesai (Normal)">✅ Selesai (Beroperasi Normal)</option>
+              <option value="Pending Sparepart">⏳ Pending (Menunggu Sparepart)</option>
+              <option value="Dalam Pemantauan">👀 Selesai Sementara (Dalam Pemantauan)</option>
+              <option value="Eskalasi Lanjut">⚠️ Perlu Eskalasi ke Tim Spesialis</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="recommendations">Rekomendasi / Saran Tindak Lanjut</label>
+            <input type="text" id="recommendations" name="recommendations" placeholder="Contoh: Perlu penggantian baterai pada jadwal PM berikutnya">
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 7: UPLOAD FOTO DOKUMENTASI (GOOGLE DRIVE) -->
+      <section class="card section-card">
+        <div class="card-header">
+          <span class="step-num">7</span>
+          <div>
+            <h2 class="card-title">Foto Bukti Pekerjaan</h2>
+            <p class="card-desc">Foto otomatis dikompres dan disimpan rapi ke Google Drive</p>
+          </div>
+        </div>
+
+        <div class="photo-upload-grid">
+          <!-- Foto Before -->
+          <div class="photo-box">
+            <span class="photo-label">1. Foto Sebelum (Before) <span class="required">*</span></span>
+            <div class="photo-preview-wrapper" id="previewWrapperBefore">
+              <div class="photo-placeholder" id="placeholderBefore">
+                <span class="icon-camera">📷</span>
+                <span>Ambil / Pilih Foto</span>
+              </div>
+              <img id="imgPreviewBefore" class="photo-img hidden" alt="Foto Sebelum">
+              <button type="button" class="btn-remove-photo hidden" id="btnRemoveBefore">&times;</button>
+            </div>
+            <input type="file" id="inputPhotoBefore" accept="image/*" capture="environment" class="file-input-hidden">
+          </div>
+
+          <!-- Foto During -->
+          <div class="photo-box">
+            <span class="photo-label">2. Foto Pengerjaan (During)</span>
+            <div class="photo-preview-wrapper" id="previewWrapperDuring">
+              <div class="photo-placeholder" id="placeholderDuring">
+                <span class="icon-camera">📷</span>
+                <span>Ambil / Pilih Foto</span>
+              </div>
+              <img id="imgPreviewDuring" class="photo-img hidden" alt="Foto Pengerjaan">
+              <button type="button" class="btn-remove-photo hidden" id="btnRemoveDuring">&times;</button>
+            </div>
+            <input type="file" id="inputPhotoDuring" accept="image/*" capture="environment" class="file-input-hidden">
+          </div>
+
+          <!-- Foto After -->
+          <div class="photo-box">
+            <span class="photo-label">3. Foto Sesudah (After) <span class="required">*</span></span>
+            <div class="photo-preview-wrapper" id="previewWrapperAfter">
+              <div class="photo-placeholder" id="placeholderAfter">
+                <span class="icon-camera">📷</span>
+                <span>Ambil / Pilih Foto</span>
+              </div>
+              <img id="imgPreviewAfter" class="photo-img hidden" alt="Foto Sesudah">
+              <button type="button" class="btn-remove-photo hidden" id="btnRemoveAfter">&times;</button>
+            </div>
+            <input type="file" id="inputPhotoAfter" accept="image/*" capture="environment" class="file-input-hidden">
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 8: TANDA TANGAN DIGITAL -->
+      <section class="card section-card">
+        <div class="card-header">
+          <span class="step-num">8</span>
+          <div>
+            <h2 class="card-title">Tanda Tangan Digital</h2>
+            <p class="card-desc">Goreskan tanda tangan langsung pada layar sentuh HP / mouse</p>
+          </div>
+        </div>
+
+        <div class="signature-grid">
+          <!-- Signature Teknisi -->
+          <div class="signature-box">
+            <div class="sig-header">
+              <span class="sig-title">Tanda Tangan Teknisi</span>
+              <button type="button" class="btn-clear-sig" id="btnClearSigTech">Hapus ✕</button>
+            </div>
+            <div class="canvas-container">
+              <canvas id="canvasSigTech" width="340" height="150"></canvas>
+            </div>
+            <span class="sig-caption" id="captionTechName">Teknisi Pentakom</span>
+          </div>
+
+          <!-- Signature PIC Client -->
+          <div class="signature-box">
+            <div class="sig-header">
+              <span class="sig-title">Tanda Tangan PIC Klien</span>
+              <button type="button" class="btn-clear-sig" id="btnClearSigPic">Hapus ✕</button>
+            </div>
+            <div class="canvas-container">
+              <canvas id="canvasSigPic" width="340" height="150"></canvas>
+            </div>
+            <span class="sig-caption" id="captionPicName">PIC / Pendamping Site</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" id="btnResetForm" class="btn btn-secondary">
+          Bersihkan Form
+        </button>
+        <button type="submit" id="btnSubmitForm" class="btn btn-primary">
+          <span class="btn-icon">🚀</span> Kirim Laporan ke Google Drive & Sheets
+        </button>
+      </div>
+    </form>
+
+    <footer class="app-footer">
+      <p>&copy; 2026 Pentakom Service Management &bull; Online Field Report</p>
+    </footer>
+  </div>
+
+  <!-- MODAL: SETTING WEB APP URL -->
+  <div id="modalConfig" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙️ Konfigurasi Backend Google</h3>
+        <button type="button" class="modal-close" id="btnCloseConfig">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          Masukkan URL <strong>Google Apps Script Web App</strong> yang telah Anda buat agar formulir ini dapat langsung menyimpan data ke Google Sheets & Google Drive.
+        </p>
+        <div class="form-group">
+          <label for="inputScriptUrl">Google Apps Script Web App URL:</label>
+          <input type="url" id="inputScriptUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+          <span class="help-text">URL ini tersimpan di browser Anda sehingga tidak perlu diisi berulang kali.</span>
+        </div>
+        <div class="connection-status-box" id="connectionStatusBox">
+          <span id="connStatusIcon">ℹ️</span>
+          <span id="connStatusText">Status: Belum ada URL Google Apps Script</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnSaveConfig" class="btn btn-primary">Simpan Pengaturan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LOADING SPINNER -->
+  <div id="modalLoading" class="modal-overlay hidden">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <h3 class="loading-title" id="loadingTitle">Mengirim Laporan...</h3>
+      <p class="loading-desc" id="loadingDesc">Mengompres foto dan menyimpan data ke Google Drive & Sheets. Mohon tunggu sejenak.</p>
+    </div>
+  </div>
+
+  <!-- MODAL: SUCCESS CONFIRMATION -->
+  <div id="modalSuccess" class="modal-overlay hidden">
+    <div class="success-card">
+      <div class="success-icon">🎉</div>
+      <h3 class="success-title">Laporan Berhasil Terkirim!</h3>
+      <p class="success-desc">Data laporan pemeliharaan serta foto bukti kerja telah berhasil diarsipkan ke Google Sheets dan Google Drive Pentakom.</p>
+
+      <div class="ticket-summary-box">
+        <div class="summary-row">
+          <span>No. Referensi / Tiket:</span>
+          <strong id="successTicketNo">-</strong>
+        </div>
+        <div class="summary-row">
+          <span>Tipe Pekerjaan:</span>
+          <strong id="successWorkType">-</strong>
+        </div>
+        <div class="summary-row">
+          <span>Klien & Site:</span>
+          <strong id="successClientSite">-</strong>
+        </div>
+        <div class="summary-row">
+          <span>Status Akhir:</span>
+          <strong id="successStatus">-</strong>
+        </div>
+      </div>
+
+      <div class="success-actions">
+        <button type="button" id="btnNewReport" class="btn btn-primary">Buat Laporan Baru</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
