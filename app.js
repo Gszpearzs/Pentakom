@@ -1690,7 +1690,9 @@ async function getPdfBlob(container, opt) {
 function buildSheetsPdfWorker(stage, opt) {
   const sheets = Array.from(stage.querySelectorAll(".pdf-paper-sheet"));
   const cleanOpt = Object.assign({}, opt, {
-    html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0, windowWidth: 720, backgroundColor: "#ffffff" },
+    margin: [34, 36, 34, 36],
+    html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0, windowWidth: 722, backgroundColor: "#ffffff" },
+    jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait", hotfixes: ["px_scaling"] },
     pagebreak: { mode: ["avoid-all"] }
   });
   let worker = html2pdf().set(cleanOpt).from(sheets[0]).toPdf();
@@ -1800,8 +1802,10 @@ async function downloadPdfFromPreview() {
     sheets.forEach((sh, idx) => {
       sh.style.boxShadow = "none";
       sh.style.margin = "0";
-      sh.style.width = "720px";
-      sh.style.padding = "20px 24px";
+      sh.style.width = "100%";
+      sh.style.maxWidth = "none";
+      sh.style.borderRadius = "0";
+      sh.style.padding = "0";
       if (idx < sheets.length - 1) {
         sh.style.pageBreakAfter = "always";
         sh.style.breakAfter = "page";
@@ -1928,8 +1932,10 @@ async function submitBaktiCloud() {
     sheets.forEach((sh, idx) => {
       sh.style.boxShadow = "none";
       sh.style.margin = "0";
-      sh.style.width = "720px";
-      sh.style.padding = "20px 24px";
+      sh.style.width = "100%";
+      sh.style.maxWidth = "none";
+      sh.style.borderRadius = "0";
+      sh.style.padding = "0";
       if (idx < sheets.length - 1) {
         sh.style.pageBreakAfter = "always";
         sh.style.breakAfter = "page";
