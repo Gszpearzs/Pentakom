@@ -489,24 +489,63 @@
   }
   .pdf-paper-sheet {
     background: #ffffff;
-    width: 710px;
-    max-width: 100%;
+    width: 794px;
+    min-width: 794px;
+    min-height: 1123px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    border-radius: 4px;
-    padding: 22px 25px;
+    border-radius: 2px;
+    /* Margin Standar Microsoft Word (.docx) Normal: 2.54 cm (25.4 mm = 96px pada 96 DPI) di keempat sisi */
+    padding: 96px;
     box-sizing: border-box;
     color: #1e293b;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  /* Paksa kontainer html2pdf selalu di titik (0,0) tanpa margin:auto agar tidak terpotong di layar lebar/sempit */
+  .html2pdf__overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .html2pdf__container {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 2.54cm;
   }
 
   @media print {
-    body > * {
+    body > *:not(#pdfPreviewModal) {
       display: none !important;
     }
-    #pdfPreviewModal,
-    #pdfPreviewModal * {
+    #pdfPreviewModal {
+      position: static !important;
       display: block !important;
-      visibility: visible !important;
+      width: 100% !important;
+      height: auto !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+    }
+    .pdf-modal-container {
+      background: transparent !important;
+      height: auto !important;
     }
     .pdf-modal-header {
       display: none !important;
@@ -515,13 +554,21 @@
       background: transparent !important;
       padding: 0 !important;
       overflow: visible !important;
+      display: block !important;
     }
     .pdf-paper-sheet {
       box-shadow: none !important;
       margin: 0 !important;
-      padding: 10px !important;
+      padding: 0 !important;
       width: 100% !important;
+      min-width: 0 !important;
+      min-height: 246.2mm !important;
       page-break-after: always;
+      break-after: page;
+    }
+    .pdf-paper-sheet:last-child {
+      page-break-after: auto;
+      break-after: auto;
     }
   }
 </style>
@@ -1004,7 +1051,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="locations.js?v=20261016_1902"></script>
-<script src="app.js?v=20261016_1902"></script>
+<script src="locations.js?v=20261016_2000"></script>
+<script src="app.js?v=20261016_2000"></script>
 </body>
 </html>

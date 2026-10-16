@@ -1226,7 +1226,7 @@ function buildBaktiPdfContainer() {
   container.innerHTML = `
     <style>
       .pdf-report-root {
-        width: 710px;
+        width: 794px;
         box-sizing: border-box;
         color: #1e293b;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -1236,12 +1236,18 @@ function buildBaktiPdfContainer() {
       }
       .pdf-paper-sheet {
         background: #ffffff;
-        width: 710px;
+        width: 794px;
+        min-width: 794px;
+        min-height: 1123px;
         box-sizing: border-box;
-        padding: 18px 22px;
+        /* Margin Standar Microsoft Word (.docx) Normal = 2.54 cm (25.4 mm / 96px pada 96 DPI) di keempat sisi */
+        padding: 96px;
         margin-bottom: 24px;
         box-shadow: 0 4px 18px rgba(0,0,0,0.25);
-        border-radius: 4px;
+        border-radius: 2px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
         page-break-after: always;
         break-after: page;
       }
@@ -1259,11 +1265,11 @@ function buildBaktiPdfContainer() {
         margin-bottom: 10px;
       }
       .pdf-header-title {
-        font-size: 13.5px;
+        font-size: 13px;
         font-weight: 800;
         color: #0f2942;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.4px;
       }
       .pdf-header-sub {
         font-size: 8.5px;
@@ -1275,7 +1281,7 @@ function buildBaktiPdfContainer() {
         background: #e53935;
         color: #ffffff;
         font-weight: 800;
-        font-size: 12px;
+        font-size: 11.5px;
         padding: 3px 10px;
         border-radius: 4px;
         letter-spacing: 1px;
@@ -1285,11 +1291,11 @@ function buildBaktiPdfContainer() {
         justify-content: space-between;
         align-items: center;
         border-bottom: 1.5px solid #0f2942;
-        padding-bottom: 5px;
-        margin-bottom: 10px;
+        padding-bottom: 4px;
+        margin-bottom: 8px;
       }
       .pdf-running-title {
-        font-size: 10px;
+        font-size: 9.5px;
         font-weight: 800;
         color: #0f2942;
         text-transform: uppercase;
@@ -1298,19 +1304,19 @@ function buildBaktiPdfContainer() {
         background: #e53935;
         color: #ffffff;
         font-weight: 800;
-        font-size: 9px;
+        font-size: 8.5px;
         padding: 2px 7px;
         border-radius: 3px;
       }
       .pdf-section-title {
         background: #0f2942;
         color: #ffffff;
-        font-size: 9.5px;
+        font-size: 9px;
         font-weight: 700;
         padding: 4px 7px;
         border-radius: 3px;
         margin-top: 8px;
-        margin-bottom: 6px;
+        margin-bottom: 5px;
         text-transform: uppercase;
         page-break-after: avoid;
         break-after: avoid;
@@ -1342,6 +1348,22 @@ function buildBaktiPdfContainer() {
         width: 32%;
         color: #334155;
       }
+      /* Penyesuaian kepadatan Lembar 2 agar 4 tabel muat utuh dalam 1 halaman ber-margin Word 2.54cm */
+      #pdfSheet2 .pdf-section-title {
+        margin-top: 5px;
+        margin-bottom: 3.5px;
+        padding: 3px 6px;
+        font-size: 8.8px;
+      }
+      #pdfSheet2 .pdf-table {
+        margin-bottom: 5px;
+        font-size: 8.4px;
+      }
+      #pdfSheet2 .pdf-table th,
+      #pdfSheet2 .pdf-table td {
+        padding: 2.4px 5.5px !important;
+        line-height: 1.2;
+      }
       .pdf-issue-box {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -1359,11 +1381,11 @@ function buildBaktiPdfContainer() {
         background: #ffffff;
         border-radius: 4px;
         padding: 6px;
-        margin-bottom: 8px;
+        margin-bottom: 7px;
       }
       .pdf-photo-title {
         font-weight: 700;
-        font-size: 9.5px;
+        font-size: 9px;
         color: #0f2942;
         margin-bottom: 4px;
         border-bottom: 1px solid #f1f5f9;
@@ -1384,7 +1406,7 @@ function buildBaktiPdfContainer() {
       }
       .pdf-photo-img {
         width: 100%;
-        max-height: 155px;
+        max-height: 135px;
         object-fit: contain;
         border: 1px solid #cbd5e1;
         border-radius: 3px;
@@ -1393,7 +1415,7 @@ function buildBaktiPdfContainer() {
         margin: 0 auto;
       }
       .pdf-photo-empty {
-        height: 95px;
+        height: 85px;
         border: 1px dashed #cbd5e1;
         background: #f8fafc;
         border-radius: 3px;
@@ -1404,7 +1426,7 @@ function buildBaktiPdfContainer() {
         font-size: 8.5px;
       }
       .pdf-photo-lbl {
-        font-size: 8.5px;
+        font-size: 8px;
         font-weight: 600;
         color: #475569;
         margin-top: 3px;
@@ -1413,7 +1435,7 @@ function buildBaktiPdfContainer() {
         width: 100%;
         table-layout: fixed;
         border: none;
-        margin-top: 25px;
+        margin-top: 18px;
         page-break-inside: avoid;
         break-inside: avoid;
       }
@@ -1422,15 +1444,15 @@ function buildBaktiPdfContainer() {
         text-align: center;
         width: 50%;
         vertical-align: top;
-        padding: 0 15px;
+        padding: 0 12px;
       }
       .pdf-sheet-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
         border-top: 1px solid #e2e8f0;
-        margin-top: 12px;
-        padding-top: 4px;
+        margin-top: auto;
+        padding-top: 5px;
         font-size: 8px;
         color: #94a3b8;
       }
@@ -1661,46 +1683,179 @@ function buildBaktiPdfContainer() {
   return { container, filename };
 }
 
-// Helper untuk mengekstrak Blob PDF dari html2pdf.js
-async function getPdfBlob(container, opt) {
+/**
+ * Render setiap lembar (.pdf-paper-sheet) secara presisi ke dalam dokumen A4 (210 x 297 mm)
+ * menggunakan Margin Standar Microsoft Word (.docx) Normal:
+ * Atas = 2.54 cm (25.4 mm), Bawah = 2.54 cm (25.4 mm), Kiri = 2.54 cm (25.4 mm), Kanan = 2.54 cm (25.4 mm).
+ */
+async function renderBaktiPdfDocument(sourceContainer) {
   if (typeof html2pdf === "undefined") {
     throw new Error("Pustaka html2pdf belum siap dimuat.");
   }
-  const worker = html2pdf().set(opt).from(container);
 
-  if (typeof worker.outputPdf === "function") {
-    try {
-      const b = await worker.outputPdf("blob");
-      if (b instanceof Blob && b.size > 1000) return b;
-    } catch (e) {}
+  const styleEl = sourceContainer.querySelector("style");
+  const baseStyleText = styleEl ? styleEl.innerHTML : "";
+  const sourceSheets = Array.from(sourceContainer.querySelectorAll(".pdf-paper-sheet"));
+  if (sourceSheets.length === 0) {
+    throw new Error("Tidak ditemukan lembar laporan untuk dirender.");
   }
 
-  if (typeof worker.output === "function") {
-    try {
-      const b = await worker.output("blob");
-      if (b instanceof Blob && b.size > 1000) return b;
-    } catch (e) {}
+  // Area cetak di dalam Margin Standar Word (A4 210x297mm dikurangi 2x25.4mm = 159.2mm x 246.2mm => 602px x 931px pada 96 DPI)
+  const CONTENT_W_PX = 602;
+  const CONTENT_MIN_H_PX = 931;
+
+  // Buat instance jsPDF A4 Portrait dalam satuan mm (210 x 297 mm)
+  const dummyCanvas = document.createElement("canvas");
+  dummyCanvas.width = 4;
+  dummyCanvas.height = 4;
+  const dummyCtx = dummyCanvas.getContext("2d");
+  dummyCtx.fillStyle = "#ffffff";
+  dummyCtx.fillRect(0, 0, 4, 4);
+
+  const pdf = await html2pdf()
+    .set({
+      margin: [25.4, 25.4, 25.4, 25.4],
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    })
+    .from(dummyCanvas, "canvas")
+    .toPdf()
+    .get("pdf");
+
+  // Konstanta Kertas A4 & Margin Standar Microsoft Word (.docx) Normal (2.54 cm = 25.4 mm)
+  const PAGE_W_MM = 210.0;
+  const PAGE_H_MM = 297.0;
+  const MARGIN_TOP_MM = 25.4;
+  const MARGIN_BOTTOM_MM = 25.4;
+  const MARGIN_LEFT_MM = 25.4;
+  const MARGIN_RIGHT_MM = 25.4;
+  const USABLE_W_MM = PAGE_W_MM - MARGIN_LEFT_MM - MARGIN_RIGHT_MM; // 159.2 mm
+  const USABLE_H_MM = PAGE_H_MM - MARGIN_TOP_MM - MARGIN_BOTTOM_MM; // 246.2 mm
+
+  for (let i = 0; i < sourceSheets.length; i++) {
+    const sheetClone = sourceSheets[i].cloneNode(true);
+    sheetClone.style.width = CONTENT_W_PX + "px";
+    sheetClone.style.minWidth = CONTENT_W_PX + "px";
+    sheetClone.style.maxWidth = CONTENT_W_PX + "px";
+    sheetClone.style.minHeight = CONTENT_MIN_H_PX + "px";
+    sheetClone.style.padding = "0";
+    sheetClone.style.margin = "0";
+    sheetClone.style.boxShadow = "none";
+    sheetClone.style.borderRadius = "0";
+    sheetClone.style.backgroundColor = "#ffffff";
+    sheetClone.style.boxSizing = "border-box";
+
+    const wrapper = document.createElement("div");
+    wrapper.style.width = CONTENT_W_PX + "px";
+    wrapper.style.margin = "0";
+    wrapper.style.padding = "0";
+    wrapper.style.backgroundColor = "#ffffff";
+    wrapper.style.boxSizing = "border-box";
+
+    const sheetStyle = document.createElement("style");
+    sheetStyle.innerHTML = baseStyleText + `
+      .html2pdf__overlay {
+        position: fixed !important;
+        top: 0px !important;
+        left: 0px !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: ${CONTENT_W_PX}px !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .html2pdf__container {
+        position: absolute !important;
+        top: 0px !important;
+        left: 0px !important;
+        right: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: ${CONTENT_W_PX}px !important;
+        min-width: ${CONTENT_W_PX}px !important;
+        max-width: ${CONTENT_W_PX}px !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+      }
+    `;
+    wrapper.appendChild(sheetStyle);
+    wrapper.appendChild(sheetClone);
+
+    const sheetOpt = {
+      margin: 0,
+      enableLinks: false,
+      pagebreak: { mode: [] },
+      image: { type: "jpeg", quality: 0.96 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        width: CONTENT_W_PX
+      },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    };
+
+    const canvas = await html2pdf()
+      .set(sheetOpt)
+      .from(wrapper)
+      .toContainer()
+      .then(function () {
+        if (this.prop.overlay) {
+          this.prop.overlay.style.position = "fixed";
+          this.prop.overlay.style.top = "0px";
+          this.prop.overlay.style.left = "0px";
+          this.prop.overlay.style.right = "auto";
+          this.prop.overlay.style.bottom = "auto";
+          this.prop.overlay.style.width = CONTENT_W_PX + "px";
+          this.prop.overlay.style.margin = "0px";
+          this.prop.overlay.style.padding = "0px";
+          this.prop.overlay.style.overflow = "visible";
+        }
+        if (this.prop.container) {
+          this.prop.container.style.position = "absolute";
+          this.prop.container.style.top = "0px";
+          this.prop.container.style.left = "0px";
+          this.prop.container.style.right = "auto";
+          this.prop.container.style.margin = "0px";
+          this.prop.container.style.padding = "0px";
+          this.prop.container.style.width = CONTENT_W_PX + "px";
+          this.prop.container.style.minWidth = CONTENT_W_PX + "px";
+          this.prop.container.style.maxWidth = CONTENT_W_PX + "px";
+          this.prop.container.style.boxSizing = "border-box";
+        }
+        const imgs = this.prop.container ? this.prop.container.querySelectorAll("img") : [];
+        return Promise.all(Array.from(imgs).map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise(res => {
+            img.onload = res;
+            img.onerror = res;
+          });
+        })).then(() => new Promise(r => setTimeout(r, 60)));
+      })
+      .toCanvas()
+      .get("canvas");
+
+    if (i > 0) {
+      pdf.addPage();
+    }
+
+    const imgDataUrl = canvas.toDataURL("image/jpeg", 0.96);
+    let drawW = USABLE_W_MM;
+    let drawH = (canvas.height / canvas.width) * drawW;
+    if (drawH > USABLE_H_MM) {
+      drawH = USABLE_H_MM;
+    }
+
+    // Tempatkan tepat pada koordinat Margin Standar Word (.docx): X = 25.4mm (2.54cm), Y = 25.4mm (2.54cm)
+    pdf.addImage(imgDataUrl, "JPEG", MARGIN_LEFT_MM, MARGIN_TOP_MM, drawW, drawH);
   }
 
-  const pdfInstance = await worker.toPdf().get("pdf");
-  return pdfInstance.output("blob");
-}
-
-// Render tiap lembar A4 secara terpisah lalu gabungkan menjadi PDF multi-halaman
-function buildSheetsPdfWorker(stage, opt) {
-  const sheets = Array.from(stage.querySelectorAll(".pdf-paper-sheet"));
-  const cleanOpt = Object.assign({}, opt, {
-    margin: [34, 36, 34, 36],
-    html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0, windowWidth: 722, backgroundColor: "#ffffff" },
-    jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait", hotfixes: ["px_scaling"] },
-    pagebreak: { mode: ["avoid-all"] }
-  });
-  let worker = html2pdf().set(cleanOpt).from(sheets[0]).toPdf();
-  for (let i = 1; i < sheets.length; i++) {
-    const sh = sheets[i];
-    worker = worker.get("pdf").then(pdf => { pdf.addPage(); }).from(sh).toContainer().toCanvas().toPdf();
-  }
-  return worker;
+  return pdf;
 }
 
 // Buka Modal Pratinjau Dokumen PDF
@@ -1728,7 +1883,7 @@ function previewBaktiPdf() {
   const siteName = (document.getElementById("siteName")?.value || "").trim();
   const subEl = document.getElementById("pdfPreviewSubtitle");
   if (subEl) {
-    subEl.textContent = `Site ID: ${siteId} ${siteName ? "(" + siteName + ")" : ""} | Berkas: ${filename}`;
+    subEl.textContent = `Site ID: ${siteId} ${siteName ? "(" + siteName + ")" : ""} | Margin: Standar Word (2.54 cm) | Berkas: ${filename}`;
   }
 
   const previewBody = document.getElementById("pdfPreviewBody");
@@ -1757,7 +1912,7 @@ function printBaktiPdf() {
   window.print();
 }
 
-// Unduh Berkas PDF dari Modal Pratinjau (Bebas Clipping & Presisi A4)
+// Unduh Berkas PDF dari Modal Pratinjau dengan Margin Standar Word (.docx)
 async function downloadPdfFromPreview() {
   if (!currentPdfContainer) {
     alert("Data laporan belum dimuat. Silakan tutup dan buka pratinjau kembali.");
@@ -1773,94 +1928,13 @@ async function downloadPdfFromPreview() {
 
   const log = document.getElementById("statusLog");
   log.classList.add("show");
-  log.textContent = "⏳ Memproses berkas PDF Laporan BAKTI...";
+  log.textContent = "⏳ Memproses berkas PDF Laporan BAKTI (Margin Standar Word 2.54 cm)...";
 
-  let stage = null;
   try {
-    if (typeof html2pdf === "undefined") {
-      throw new Error("Pustaka html2pdf belum siap dimuat.");
-    }
-
-    // Buat stage capture yang terisolasi di (0, 0)
-    stage = document.createElement("div");
-    stage.id = "pdfCaptureStage";
-    stage.style.position = "absolute";
-    stage.style.top = "0";
-    stage.style.left = "0";
-    stage.style.width = "720px";
-    stage.style.minWidth = "720px";
-    stage.style.maxWidth = "720px";
-    stage.style.boxSizing = "border-box";
-    stage.style.margin = "0";
-    stage.style.padding = "0";
-    stage.style.backgroundColor = "#ffffff";
-    stage.style.zIndex = "-999999";
-    stage.style.pointerEvents = "none";
-
-    const clone = currentPdfContainer.cloneNode(true);
-    const sheets = clone.querySelectorAll(".pdf-paper-sheet");
-    sheets.forEach((sh, idx) => {
-      sh.style.boxShadow = "none";
-      sh.style.margin = "0";
-      sh.style.width = "100%";
-      sh.style.maxWidth = "none";
-      sh.style.borderRadius = "0";
-      sh.style.padding = "0";
-      if (idx < sheets.length - 1) {
-        sh.style.pageBreakAfter = "always";
-        sh.style.breakAfter = "page";
-      } else {
-        sh.style.pageBreakAfter = "auto";
-        sh.style.breakAfter = "auto";
-      }
-    });
-
-    stage.appendChild(clone);
-    document.body.appendChild(stage);
-
-    const imgs = stage.querySelectorAll("img");
-    await Promise.all(Array.from(imgs).map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(res => {
-        img.onload = res;
-        img.onerror = res;
-      });
-    }));
-
-    await new Promise(r => setTimeout(r, 200));
-
-    const opt = {
-      margin: [6, 0, 6, 0],
-      filename: currentPdfFilename,
-      image: { type: "jpeg", quality: 0.96 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
-        width: 720,
-        windowWidth: 720
-      },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["css", "legacy"] }
-    };
-
-    const dlWorker = buildSheetsPdfWorker(stage, opt);
-    await dlWorker.save();
-
-    if (stage && stage.parentNode) {
-      stage.parentNode.removeChild(stage);
-      stage = null;
-    }
-
-    log.textContent = `✔ Berkas PDF berhasil diunduh:\n📂 ${currentPdfFilename}`;
+    const pdf = await renderBaktiPdfDocument(currentPdfContainer);
+    pdf.save(currentPdfFilename);
+    log.textContent = `✔ Berkas PDF berhasil diunduh (Margin Standar Word 2.54 cm):\n📂 ${currentPdfFilename}`;
   } catch (err) {
-    if (stage && stage.parentNode) {
-      stage.parentNode.removeChild(stage);
-    }
     log.textContent = `❌ Gagal mengunduh PDF: ${err.message}`;
     console.error("Download PDF error:", err);
     alert("Gagal mengunduh PDF: " + err.message);
@@ -1904,86 +1978,13 @@ async function submitBaktiCloud() {
   }
 
   log.classList.add("show");
-  log.textContent = "⏳ [1/3] Menghasilkan dokumen PDF resmi...";
+  log.textContent = "⏳ [1/3] Menghasilkan dokumen PDF resmi (Margin Standar Word 2.54 cm)...";
   btn.disabled = true;
 
-  let stage = null;
   try {
     const { container, filename } = buildBaktiPdfContainer();
-
-    // Gunakan capture stage terisolasi (0, 0) yang sama agar posisi presisi tanpa cut off
-    stage = document.createElement("div");
-    stage.id = "pdfCaptureStage";
-    stage.style.position = "absolute";
-    stage.style.top = "0";
-    stage.style.left = "0";
-    stage.style.width = "720px";
-    stage.style.minWidth = "720px";
-    stage.style.maxWidth = "720px";
-    stage.style.boxSizing = "border-box";
-    stage.style.margin = "0";
-    stage.style.padding = "0";
-    stage.style.backgroundColor = "#ffffff";
-    stage.style.zIndex = "-999999";
-    stage.style.pointerEvents = "none";
-
-    const clone = container.cloneNode(true);
-    const sheets = clone.querySelectorAll(".pdf-paper-sheet");
-    sheets.forEach((sh, idx) => {
-      sh.style.boxShadow = "none";
-      sh.style.margin = "0";
-      sh.style.width = "100%";
-      sh.style.maxWidth = "none";
-      sh.style.borderRadius = "0";
-      sh.style.padding = "0";
-      if (idx < sheets.length - 1) {
-        sh.style.pageBreakAfter = "always";
-        sh.style.breakAfter = "page";
-      } else {
-        sh.style.pageBreakAfter = "auto";
-        sh.style.breakAfter = "auto";
-      }
-    });
-
-    stage.appendChild(clone);
-    document.body.appendChild(stage);
-
-    const imgElements = stage.querySelectorAll("img");
-    await Promise.all(Array.from(imgElements).map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(res => {
-        img.onload = res;
-        img.onerror = res;
-      });
-    }));
-
-    await new Promise(r => setTimeout(r, 200));
-
-    const opt = {
-      margin: [6, 0, 6, 0],
-      filename: filename,
-      image: { type: "jpeg", quality: 0.96 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
-        width: 720,
-        windowWidth: 720
-      },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      pagebreak: { mode: ["css", "legacy"] }
-    };
-
-    const pdfBlob = await buildSheetsPdfWorker(stage, opt).outputPdf("blob");
-
-    if (stage && stage.parentNode) {
-      stage.parentNode.removeChild(stage);
-      stage = null;
-    }
+    const pdf = await renderBaktiPdfDocument(container);
+    const pdfBlob = pdf.output("blob");
 
     log.textContent = "⏳ [2/3] Mengompres berkas dan menyiapkan payload...";
     const reader = new FileReader();
