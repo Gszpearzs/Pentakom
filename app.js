@@ -1686,6 +1686,21 @@ async function getPdfBlob(container, opt) {
   return pdfInstance.output("blob");
 }
 
+// Render tiap lembar A4 secara terpisah lalu gabungkan menjadi PDF multi-halaman
+function buildSheetsPdfWorker(stage, opt) {
+  const sheets = Array.from(stage.querySelectorAll(".pdf-paper-sheet"));
+  const cleanOpt = Object.assign({}, opt, {
+    html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0, windowWidth: 720, backgroundColor: "#ffffff" },
+    pagebreak: { mode: ["avoid-all"] }
+  });
+  let worker = html2pdf().set(cleanOpt).from(sheets[0]).toPdf();
+  for (let i = 1; i < sheets.length; i++) {
+    const sh = sheets[i];
+    worker = worker.get("pdf").then(pdf => { pdf.addPage(); }).from(sh).toContainer().toCanvas().toPdf();
+  }
+  return worker;
+}
+
 // Buka Modal Pratinjau Dokumen PDF
 function previewBaktiPdf() {
   const siteId = (document.getElementById("siteId")?.value || "").trim();
@@ -1829,7 +1844,8 @@ async function downloadPdfFromPreview() {
       pagebreak: { mode: ["css", "legacy"] }
     };
 
-    await html2pdf().set(opt).from(stage).save();
+    const dlWorker = buildSheetsPdfWorker(stage, opt);
+    await dlWorker.save();
 
     if (stage && stage.parentNode) {
       stage.parentNode.removeChild(stage);
@@ -1956,7 +1972,7 @@ async function submitBaktiCloud() {
       pagebreak: { mode: ["css", "legacy"] }
     };
 
-    const pdfBlob = await getPdfBlob(stage, opt);
+    const pdfBlob = await buildSheetsPdfWorker(stage, opt).outputPdf("blob");
 
     if (stage && stage.parentNode) {
       stage.parentNode.removeChild(stage);
