@@ -1148,6 +1148,9 @@ function buildBaktiPdfContainer() {
     </table>
   `;
 
+  // Logo Resmi BAKTI (Base64 PNG agar 100% ter-render tajam di PDF & Pratinjau tanpa kendala CORS)
+  const BAKTI_LOGO_DATA_URI = "data:image/png;base64,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";
+
   // Susun lembar foto
   let photoSheetsHtml = "";
   let totalPages = 3;
@@ -1158,7 +1161,7 @@ function buildBaktiPdfContainer() {
       <div class="pdf-paper-sheet" id="pdfSheet3">
         <div class="pdf-running-header">
           <div class="pdf-running-title">LAPORAN PEMELIHARAAN (CM & PM) &mdash; <span style="color: #2563eb;">${escapeHtml(siteId)}</span> <span style="font-size: 8.5px; color: #64748b; font-weight: 600;">(${escapeHtml(siteName)})</span></div>
-          <div class="pdf-running-badge">BAKTI</div>
+          <img class="pdf-running-logo" src="${BAKTI_LOGO_DATA_URI}" alt="BAKTI">
         </div>
         <div class="pdf-section-title">VII. DOKUMENTASI FOTO SEBELUM & SESUDAH CM/PM</div>
         <div style="padding: 12px; border: 1px dashed #cbd5e1; border-radius: 4px; text-align: center; color: #64748b; font-style: italic; margin-bottom: 20px;">
@@ -1178,7 +1181,7 @@ function buildBaktiPdfContainer() {
       <div class="pdf-paper-sheet" id="pdfSheet3">
         <div class="pdf-running-header">
           <div class="pdf-running-title">LAPORAN PEMELIHARAAN (CM & PM) &mdash; <span style="color: #2563eb;">${escapeHtml(siteId)}</span> <span style="font-size: 8.5px; color: #64748b; font-weight: 600;">(${escapeHtml(siteName)})</span></div>
-          <div class="pdf-running-badge">BAKTI</div>
+          <img class="pdf-running-logo" src="${BAKTI_LOGO_DATA_URI}" alt="BAKTI">
         </div>
         <div class="pdf-section-title">VII. DOKUMENTASI FOTO SEBELUM & SESUDAH CM/PM</div>
         ${cardsHtml}
@@ -1204,7 +1207,7 @@ function buildBaktiPdfContainer() {
         <div class="pdf-paper-sheet" id="pdfSheet${pageNum}">
           <div class="pdf-running-header">
             <div class="pdf-running-title">LAPORAN PEMELIHARAAN (CM & PM) &mdash; <span style="color: #2563eb;">${escapeHtml(siteId)}</span> <span style="font-size: 8.5px; color: #64748b; font-weight: 600;">(${escapeHtml(siteName)})</span></div>
-            <div class="pdf-running-badge">BAKTI</div>
+            <img class="pdf-running-logo" src="${BAKTI_LOGO_DATA_URI}" alt="BAKTI">
           </div>
           <div class="pdf-section-title">VII. DOKUMENTASI FOTO SEBELUM & SESUDAH CM/PM ${chunks.length > 1 ? `(Bagian ${cIdx + 1})` : ""}</div>
           ${cards}
@@ -1277,14 +1280,11 @@ function buildBaktiPdfContainer() {
         font-weight: 600;
         margin-top: 2px;
       }
-      .pdf-bakti-tag {
-        background: #e53935;
-        color: #ffffff;
-        font-weight: 800;
-        font-size: 11.5px;
-        padding: 3px 10px;
-        border-radius: 4px;
-        letter-spacing: 1px;
+      .pdf-bakti-logo {
+        height: 34px;
+        width: auto;
+        object-fit: contain;
+        display: block;
       }
       .pdf-running-header {
         display: flex;
@@ -1300,13 +1300,11 @@ function buildBaktiPdfContainer() {
         color: #0f2942;
         text-transform: uppercase;
       }
-      .pdf-running-badge {
-        background: #e53935;
-        color: #ffffff;
-        font-weight: 800;
-        font-size: 8.5px;
-        padding: 2px 7px;
-        border-radius: 3px;
+      .pdf-running-logo {
+        height: 22px;
+        width: auto;
+        object-fit: contain;
+        display: block;
       }
       .pdf-section-title {
         background: #0f2942;
@@ -1465,7 +1463,7 @@ function buildBaktiPdfContainer() {
           <div class="pdf-header-title">LAPORAN PEMELIHARAAN (CM & PM)</div>
           <div class="pdf-header-sub">PEMELIHARAAN OPERASIONAL & PERANGKAT TELEKOMUNIKASI BAKTI</div>
         </div>
-        <div class="pdf-bakti-tag">BAKTI</div>
+        <img class="pdf-bakti-logo" src="${BAKTI_LOGO_DATA_URI}" alt="BAKTI">
       </div>
 
       <table class="pdf-table pdf-table-admin">
@@ -1548,7 +1546,7 @@ function buildBaktiPdfContainer() {
     <div class="pdf-paper-sheet" id="pdfSheet2">
       <div class="pdf-running-header">
         <div class="pdf-running-title">LAPORAN PEMELIHARAAN (CM & PM) &mdash; <span style="color: #2563eb;">${escapeHtml(siteId)}</span> <span style="font-size: 8.5px; color: #64748b; font-weight: 600;">(${escapeHtml(siteName)})</span></div>
-        <div class="pdf-running-badge">BAKTI</div>
+        <img class="pdf-running-logo" src="${BAKTI_LOGO_DATA_URI}" alt="BAKTI">
       </div>
 
       <div class="pdf-section-title">III. STATUS INDOOR (SEBELUM & SESUDAH MAINTENANCE)</div>
